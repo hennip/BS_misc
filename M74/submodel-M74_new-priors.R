@@ -6,7 +6,7 @@ source("00-functions/path-main.R")
 #source("01-submodels/M74/data-M74.R")
 dfFI
 dfSE
-
+filter(dfFI, is.na(thiam)==F)
 
 M1_P<-"model{
   
@@ -34,10 +34,16 @@ M1_P<-"model{
   #a_t~dnorm(-3,4)
   #b_t~dlnorm(0.68,5)
   #sd_t~dlnorm(0.82,5)
-a_t~dnorm(-1.5,10)
-b_t~dlnorm(2,100)
-sd_t~dlnorm(0.01,1)
+#a_t~dnorm(-1.5,10)
+#b_t~dlnorm(2,100)
+#sd_t~dlnorm(0.01,1)
  #sd_t~dnorm(0.1, 10)T(0.01,)
+ 
+
+   # Priors when thiam x 10
+  a_t~dnorm(-5,0.1)
+  b_t~dlnorm(0.001,5)
+  sd_t~dlnorm(-0.04,10)
 
   
   T_thiam<-1/log(cv_thiam*cv_thiam+1)

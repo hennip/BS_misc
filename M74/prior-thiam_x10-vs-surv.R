@@ -27,13 +27,13 @@ boxplot.df<-function(mcmc.chains, name, X){ # chain object, variable name, value
 }
 
 
-tiam<-seq(0,3, by=0.01)
+tiam<-seq(0,30, by=.1)
 n<-length(tiam)
 
-a<--3
-b<-7
+a<--5
+b<-1
 mu<-c();P<-c();p<-c();sd<-c()
-sd<-0.6
+sd<-1
 for(i in 1:n){
   mu[i]<-a+b*tiam[i]
   
@@ -43,11 +43,11 @@ for(i in 1:n){
 
 df<-as_tibble(cbind(tiam,p))
 
- ggplot(df) + 
-   geom_point(aes(tiam, p))+
-   coord_cartesian(ylim=c(0,1))+
-   labs(title=paste(sep="","a=",a," b=",b))+
-   geom_vline(xintercept=0)
+ggplot(df) +
+  geom_point(aes(tiam, p))+
+  coord_cartesian(ylim=c(0,1))+
+  labs(title=paste(sep="","a=",a," b=",b))+
+  geom_vline(xintercept=0)
 
 # Sovitetaan P:t edellisestä ja estimoidaan a, b ja sd
 
@@ -122,18 +122,17 @@ P[i]~dnorm(mu[i],tau)
 mu[i]<-a+b*tiam[i]
 }
 tau<-1/pow(sd,2)
-# 
-#   a~dnorm(mu.a,t.a)
-#   b~dlnorm(M.b,T.b)
-#   sd~dlnorm(M.sd,T.sd)
+# # 
+#    a~dnorm(mu.a,t.a)
+#    b~dlnorm(M.b,T.b)
+#    sd~dlnorm(M.sd,T.sd)
    
-# a~dnorm(-3,4)
-# b~dlnorm(0.68,5)
-#sd~dlnorm(0.82,5)
-
-a~dnorm(-0.04,10)
-b~dlnorm(1.6,20)
-sd~dlnorm(0.6,10)
+# a~dnorm(-5,10)
+# b~dlnorm(0.001,100)
+# sd~dlnorm(-0.04,10)
+ a~dnorm(-5,0.1)
+ b~dlnorm(0.001,5)
+ sd~dlnorm(-0.04,10)
 
 
 }"

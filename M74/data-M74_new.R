@@ -20,7 +20,7 @@
 # library(gridExtra)
 # library(coda)
 
-source("00-basics/tidy-functions.r")
+#source("00-basics/tidy-functions.r")
 
 pathM74old<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2021/")
 pathM74<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2023/")
@@ -44,11 +44,12 @@ df<-dat%>%
   mutate(Eggs=ifelse(is.na(eggs)==F,eggs,ifelse(year<10,100,115)))%>%
   mutate(eggs=Eggs)%>%
   mutate(surv_eggs=round(eggs*(1-(YSFM/100)),0))%>%
-  mutate(thiam=`TIAM_nmol/g`)
+  mutate(thiam=`TIAM_nmol/g`)%>%
+  mutate(thiam2=thiam*10)
 
 
 dfFI<-df%>% 
-  select(YEAR, year, rivername,stock, eggs, surv_eggs,YSFM, thiam)%>%
+  select(YEAR, year, rivername,stock, eggs, surv_eggs,YSFM, thiam, thiam2)%>%
   mutate(isM74=ifelse(thiam<1, 2, ifelse(is.na(thiam)==T, NA, 1)))
 
 
@@ -100,57 +101,58 @@ dfSE<-df2%>%
 dfSE%>%filter(stock<5)
 #View(dfSE)
 
-# 
-# 
-# # wrangle for figures
-# 
-# ysfm<-dfFI%>%
-#   group_by(stock, YEAR)%>%
-#   summarise(ysfm=round(mean(YSFM/100),2),
-#             N_fem=n())
-# 
-# n_M74notNA<-dfFI%>%
-#   filter(is.na(M74)==F)%>%
-#   group_by(stock, YEAR)%>%
-#   summarise(N_M74=n())
-# 
-# cases_M74<-dfFI%>%
-#   group_by(stock, YEAR)%>%
-#   count(M74)%>%
-#   filter(M74==2)%>%
-#   mutate(N_M74fem=n)
-# 
+
+
+# wrangle for figures
+
+ysfm<-dfFI%>%
+  group_by(stock, YEAR)%>%
+  summarise(ysfm=round(mean(YSFM/100),2),
+            N_fem=n())
+
+n_M74notNA<-dfFI%>%
+  filter(is.na(isM74)==F)%>%
+  group_by(stock, YEAR)%>%
+  summarise(N_M74=n())
+
+cases_M74<-dfFI%>%
+  group_by(stock, YEAR)%>%
+  count(isM74)%>%
+  filter(isM74==2)%>%
+  mutate(N_M74fem=n)
+
 # cases_mort100<-dfFI%>%
 #   group_by(stock, YEAR)%>%
 #   count(mortality100)%>%
 #   filter(mortality100==2)%>%
 #   mutate(N_mort100=n)
-# 
-# dfFI.2<-full_join(ysfm, n_M74notNA)%>%
-#   full_join(cases_M74)%>%
-#   full_join(cases_mort100, by=c("stock", "YEAR"))%>%
-#   select(stock, YEAR, ysfm, N_fem, N_M74, N_M74fem, N_mort100)%>%
-#   mutate(N_M74fem=ifelse(is.na(N_M74fem)==T, ifelse(is.na(N_M74)==T, NA, 0),N_M74fem))%>%
-#   mutate(N_mort100=ifelse(is.na(N_mort100)==T, ifelse(is.na(N_M74)==T, NA, 0),N_mort100))%>%
-#   mutate(propM74=round(N_M74fem/N_fem,2))%>%
-#   mutate(prop_mort100=round(N_mort100/N_M74,2))#%>%
-# 
-# #View(dfFI.2)
-# 
-# dfSE.2<-dfSE%>%
-#   mutate(propM74=round(xx/Females,2))%>%
-#   mutate(river=as.factor(stock))%>%
-#   mutate(YEAR=yy+1984)%>%
-#   mutate(N_fem=Females)%>%
-#   mutate(N_M74fem=xx)%>%
-#   select(YEAR, stock, N_fem, N_M74fem, propM74)#%>%
-# 
-# #View(dfSE.2)
-# 
-# # Joining must be made by stock (numeric). With river (factor/char) the numbers will mess up 
-# dfM74<-full_join(dfFI.2,dfSE.2)%>% 
-#   select(-N_M74)%>%
-#   ungroup()
-# 
-# #View(dfM74%>%filter(YEAR>2016)%>%arrange(stock))
-# 
+
+dfFI.2<-full_join(ysfm, n_M74notNA)%>%
+  full_join(cases_M74)%>%
+  #full_join(cases_mort100, by=c("stock", "YEAR"))%>%
+  select(stock, YEAR, ysfm, N_fem, N_M74, N_M74fem#,N_mort100
+         )%>%
+  mutate(N_M74fem=ifelse(is.na(N_M74fem)==T, ifelse(is.na(N_M74)==T, NA, 0),N_M74fem))%>%
+  #mutate(N_mort100=ifelse(is.na(N_mort100)==T, ifelse(is.na(N_M74)==T, NA, 0),N_mort100))%>%
+  mutate(propM74=round(N_M74fem/N_fem,2))#%>%
+  #mutate(prop_mort100=round(N_mort100/N_M74,2))#%>%
+
+#View(dfFI.2)
+
+dfSE.2<-dfSE%>%
+  mutate(propM74=round(xx/Females,2))%>%
+  mutate(river=as.factor(stock))%>%
+  mutate(YEAR=yy+1984)%>%
+  mutate(N_fem=Females)%>%
+  mutate(N_M74fem=xx)%>%
+  select(YEAR, stock, N_fem, N_M74fem, propM74)#%>%
+
+#View(dfSE.2)
+
+# Joining must be made by stock (numeric). With river (factor/char) the numbers will mess up
+dfM74<-full_join(dfFI.2,dfSE.2)%>%
+  select(-N_M74)%>%
+  ungroup()
+
+#View(dfM74%>%filter(YEAR>2016)%>%arrange(stock))
+

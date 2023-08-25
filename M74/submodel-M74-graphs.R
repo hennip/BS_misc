@@ -57,17 +57,31 @@ plot(density(chains[,"mu_YSFM"][[1]]), main="mu_YSFM", xlim=c(0,1))
 lines(density(chains[,"mu_YSFM"][[2]]))
 lines(density(chainsP[,"mu_YSFM"][[1]]), lty=2)
 
+par(mfrow=c(2,2))
+plot(density(chains[,"a_t"][[1]]), main="a_t", xlim=c(-20,0))
+lines(density(chains[,"a_t"][[2]]))
+lines(density(chainsP[,"a_t"][[1]]), lty=2)
+
+plot(density(chains[,"b_t"][[1]]), main="b_t", xlim=c(0,5))
+lines(density(chains[,"b_t"][[2]]))
+lines(density(chainsP[,"b_t"][[1]]), lty=2)
+
+plot(density(chains[,"sd_t"][[1]]), main="sd_t", xlim=c(0,10))
+lines(density(chains[,"sd_t"][[2]]))
+lines(density(chainsP[,"sd_t"][[1]]), lty=2)
+
 
 # survival vs. thiamine
 #########################################
-thiam<-seq(0.1,5, by=0.1)
+thiam<-seq(0.1,30, by=1)
 n<-length(thiam)
 pick<-2 
 #pick<-1 # sd not included
 
 # pick chains for comparison
-c1<-window(chains[[1]], thin=1000)
-c2<-window(chainsP[[1]], thin=100)
+c1<-window(chains[[1]])#, thin=10)
+c2<-window(chainsP[[1]], thin=10)
+
 
 # Posterior
 n_samp<-length(c1[,"a_t"])
@@ -119,8 +133,8 @@ ggplot(df, aes(x, group=x))+
     colour="grey", fill="grey95")+
   geom_boxplot(
     aes(ymin = q5, lower = q25, middle = q50, upper = q75, ymax = q95),
-    stat = "identity",fill=rgb(1,1,1,0.6))+
-  labs(x="Thiamin nmol/g", y="Probability", 
+    stat = "identity",fill=rgb(1,1,1,0.01))+
+  labs(x="Thiamin nmol/10g", y="Probability", 
        title="M74 Survival")+
   geom_line(aes(x,q50))+
   geom_line(data=df.prior, aes(x,q50),col="grey")#+

@@ -1,8 +1,8 @@
-library(runjags)
-library(rjags)
-library(writexl)
-
-source("00-functions/path-main.R")
+# library(runjags)
+# library(rjags)
+# library(writexl)
+# 
+# source("00-functions/path-main.R")
 source("01-submodels/M74/data-M74.R")
 dfFI
 dfSE
@@ -38,9 +38,16 @@ M1<-"model{
   eta_YSFM~dunif(2,1000) # indicator of variance in normal yolk-sac-fry survival
 
   # See prior-thiam-vs-surv.r
-  a_t~dnorm(-3,4)
-  b_t~dlnorm(0.68,5)
-  sd_t~dlnorm(0.82,5)
+  # a_t~dnorm(-3,4)
+  # b_t~dlnorm(0.68,5)
+  # sd_t~dlnorm(0.82,5)
+ #   # Priors when thiam x 10
+#  a_t~dnorm(-5,10)
+#  b_t~dlnorm(0.001,100)
+#  sd_t~dlnorm(-0.04,10)
+  a_t~dnorm(-5,0.1)
+  b_t~dlnorm(0.001,5)
+  sd_t~dlnorm(-0.04,10)
 
   
   T_thiam<-1/log(cv_thiam*cv_thiam+1)
@@ -70,7 +77,7 @@ M1<-"model{
       logit(mu_surv_M74[y,s])<-Pmean[y,s] # mean thiamin based annual stock specific survival
 
       q[y,s,1]<-1-q[y,s,2]
-      q[y,s,2]~dbeta(aq[y],bq[y]) #Proportion that has M74
+      q[y,s,2]~dbeta(aq[y],bq[y])T(0.01,0.99) #Proportion that has M74
   
       mort_M74[y,s] <- 1-( (q[y,s,1]*1)+(q[y,s,2]*mu_surv_M74[y,s]) )# proportion of all offspring that dies because of M74
       
@@ -90,12 +97,15 @@ M1<-"model{
 
 data=list(N_FI=length(dfFI$eggs),Eggs=dfFI$eggs, year=dfFI$year, stock=dfFI$stock,
           x=dfFI$surv_eggs, j=dfFI$isM74,
-          Nstocks=max(dfFI$stock), Nyears=max(dfFI$year)) 
+          Nstocks=max(dfFI$stock), Nyears=max(dfFI$year),
+          thiam_obs=dfFI$thiam2
+          #thiam_obs=dfFI$thiam
+          ) 
           #yy=dfSE$yy, stock=dfSE$stock, Females=dfSE$Females, xx=dfSE$xx)
 
-var_names=c("mort_M74", "q",
+var_names=c("mort_M74", "q", 
             "a_t", "b_t", "sd_t", 
-"mu_YSFM", "cv_thiam", "mupsi", "cvpsi", "mu_mean_thiam" )
+"mu_YSFM", "eta_YSFM","cv_thiam", "mupsi", "cvpsi", "mu_mean_thiam" )
 #inits=list(p=array(0.01,dim=c(1754,2)))
 
 run0 <- run.jags(M1,
@@ -110,6 +120,8 @@ run1<-extend.jags(run0,combine=T,sample=1000, thin=10)
 run<-run1
 summary(run)
 summary(run, var="YSFM")
+summary(run, var="a_t")
+summary(run, var="b_t")
 
 plot(run)
 plot(run, var="YSFM")
@@ -119,7 +131,10 @@ plot(run, var="sd_t")
 
 save(dfFI, file="dfFI.RData")
 save(run, file="M74_run.RData")
+
 load("M74_run.RData")
+
+load("M74_run_test.RData")
 load("M74_run_prior2.RData")
 
 sum_run<-summary(run)
