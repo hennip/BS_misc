@@ -41,7 +41,7 @@ boxplot.bugs<-function(param, R, Y){ # variable name, values to x-axis
 # Formerly called boxplot.jags.df2
 boxplot_2ind<-function(mcmc.chains, name1, name2, X){ # chain object, variable name, values to x-axis
   # note: length of x and dim variable need to match
-  
+
   d<-as.matrix(mcmc.chains)
   
   Q5<-c();Q25<-c();Q50<-c();Q75<-c();Q95<-c()
@@ -148,55 +148,15 @@ ggplot(df1, aes(x=YEAR,group=YEAR,
 # Same with results from new model
 # F 4.2.2.2
 #######################
+chains<-as.mcmc.list(run)
 d<-as.matrix(chains)
 d[,grep("mort_M74",colnames(d))]
-d[,"mort_M74[1,38]"]
+d[,"mort_M74[37,1]"]
 
 Years
-for(r in 1:length(Rivers)){
-
-    df<-boxplot_2ind(d, "mort_M74[", r ,1:length(Years))
-    
-    
-    
-    %>%
+for(r in 1:14){
+  df<-boxplot_2ind(d, "mort_M74[", str_c(r,"]") ,1:length(Years))%>%
     mutate(stock=r)
-  ifelse(r>1, df2<-bind_rows(df2,df),df2<-df)
-}
-
-r<-1
-y<-1
-
-X<-1:37
-for(r in 1)  
-Q5<-c();Q25<-c();Q50<-c();Q75<-c();Q95<-c()
-for(i in X[1]:X[length(X)]){
-  #y<-d[,str_c(name1,i,",",name2)]
-  y<-d[,str_c("mort_M74[",r,",", i,"]")]
-  
-  Q5[i] = quantile(y,0.05)
-  Q25[i] = quantile(y,0.25)
-  Q50[i] = quantile(y,0.5)
-  Q75[i] = quantile(y,0.75)
-  Q95[i] = quantile(y,0.95)
-}
-
-if(X[1]>1){X<-c(rep(NA,X[1]-1),X)}
-df<-data.frame(
-  x<-X,
-  q5=Q5,
-  q25=Q25,
-  q50=Q50,
-  q75=Q75,
-  q95=Q95
-)
-colnames(df)<-c("x","q5","q25","q50","q75","q95")
-
-
-for(r in 1:4){
-#r<-3
-  df<-boxplot_2ind(chains, "mort_M74[",str_c(r,"]"),1:(length(Years)-1))
-  df<-mutate(df, River=r)
   ifelse(r>1, df2<-bind_rows(df2,df),df2<-df)
 }
 df.2<-as_tibble(setNames(df2,c("Year","q5","q25","q50","q75","q95","stock")))%>%

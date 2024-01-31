@@ -3,7 +3,7 @@
 # library(writexl)
 # 
 # source("00-functions/path-main.R")
-source("run-this-first.R")
+#source("01-submodels/M74/data-M74.R")
 source("M74/data-M74_new.R")
 dfFI
 dfSE
@@ -16,7 +16,7 @@ M1<-"model{
   for (i in 1:N_FI){ #number of females in the Finnish data
     x[i]~dbin(p[i, j[i]], Eggs[i]) # likelihood function: x = number of surviving eggs, p= probability of survival, Egg = total number of eggs
     j[i]~dcat(q[year[i],stockFI[i],1:2])
-    x_rep[i]~dbin(p[i, j[i]], Eggs[i])
+    x_rep[i]~dbin(p[i, j[i]], Eggs[i]) 
     
     p[i,1] <- S_YSFM[i] #survival from normal YSFM
     p[i,2] <- S_YSFM[i]*S_M74[i] #survival from both YSFM and M74
@@ -25,12 +25,14 @@ M1<-"model{
     P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t,2))
     
     # Ennustetaan puuttuvat tiamiinit
-    thiam_obs[i]~dlnorm(M_thiam[i], T_thiam)
+    thiam_obs[i]~dlnorm(M_thiam_o[i], T_thiam_o[i])
     
-    M_thiam[i]<-mean_thiam[year[i],stockFI[i]]-0.5/T_thiam
-   
+    M_thiam[i]<-mu_thiam[year[i],stockFI[i]]-0.5/T_thiam_o[i]
+    T_thiam_o[i]<-1/log( pow(cv_thiam[year[i],stockFI[i]],2) +1 )
+ 
     M_YSFM[i]~dbeta(a_YSFM,b_YSFM) # normal yolk-sac-fry mortality
     S_YSFM[i]<-1-M_YSFM[i]
+  
   }
   # transformation from mean and eta into beta-parameters
   a_YSFM<- mu_YSFM * eta_YSFM
@@ -50,9 +52,7 @@ M1<-"model{
   b_t~dlnorm(0.001,5)
   sd_t~dlnorm(-0.04,10)
 
-  
-  T_thiam<-1/log(cv_thiam*cv_thiam+1)
-  cv_thiam~dunif(0.1,2) # cv saman vuoden ja kannan mittausten yli
+   #cv_thiam~dunif(0.1,2) # cv saman vuoden ja kannan mittausten yli
   
   #sd_mean_thiam~dunif(0.01,10)
   Mpsi<-log(mupsi)-0.5/Tpsi
@@ -68,17 +68,21 @@ M1<-"model{
     M_mean_thiam[y]<-log(mu_mean_thiam[y])-0.5/T_mean_thiam
         
     for (s in 1:Nstocks){
-    # Mietitään pitäisikö olla mu_mean_thiam[y] ja näille hyperparametrit, silloin kai
-    # jos kannasta ei ole tietoa, sen tiamiinitason pitäisi olla samanlaisempi muiden kantojen saman vuoden
-    # mittauksien kanssa kuin aivan muiden vuosien kanssa
-      #mean_thiam[y,s]~dnorm(mu_mean_thiam, 1/(pow(sd_mean_thiam,2)))T(0.01,)
-      mean_thiam[y,s]~dlnorm(M_mean_thiam[y], T_mean_thiam)
+      #mean_thiam[y,s]~dlnorm(M_mean_thiam[y], T_mean_thiam)
+      thiam[y,s]~dlnorm(M_mean_thiam[y], T_thiam[y,s])
+      M_mean_thiam[y]<-log(mu_thiam[y])-0.5/T_thiam[y]
+      mu_thiam[y,s]~dlnorm(Mpsi, Tpsi)# keskimääräinen tiamiinitaso vuonna y
+     cv_thiam[y,s]~ #tässä pitäisi olla hierarkia
+   
       
-      Pmean[y,s]~dnorm(a_t+b_t*mean_thiam[y,s],1/pow(sd_t,2))
+    M_thiam[i]<-mean_thiam[year[i],stockFI[i]]-0.5/T_thiam[i]
+    T_thiam[i]<-1/log( pow(cv_thiam[year[i],stockFI[i]],2) +1 )
+
+      
+      Pmean[y,s]~dnorm(a_t+b_t*thiam[y,s],1/pow(sd_t,2))
       logit(mu_surv_M74[y,s])<-Pmean[y,s] # mean thiamin based annual stock specific survival
 
       q[y,s,1]<-1-q[y,s,2]
-      # PITÄISIKÖ NÄIDEN PRIOREIDEN OLLA KANTAKOHTAISIA???
       q[y,s,2]~dbeta(aq[y],bq[y])T(0.01,0.99) #Proportion that has M74
   
       mort_M74[y,s] <- 1-( (q[y,s,1]*1)+(q[y,s,2]*mu_surv_M74[y,s]) )# proportion of all offspring that dies because of M74
@@ -106,28 +110,44 @@ data=list(
   Nyears=max(dfFI$year),
   thiam_obs=dfFI$thiam2
   #thiam_obs=dfFI$thiam
-  ) 
+) 
 
-var_names=c("mort_M74", "muq", "etaq",
+
+var_names=c("mort_M74", "muq", "etaq","x_rep",
             "a_t", "b_t", "sd_t", 
 "mu_YSFM", "eta_YSFM","cv_thiam", "mupsi", "cvpsi", "mu_mean_thiam", "cv_mean_thiam" )
 #inits=list(p=array(0.01,dim=c(1754,2)))
 
 run0 <- run.jags(M1,
                  monitor= var_names,data=data, #inits = inits,
-                 n.chains = 2, method = 'parallel', thin=10, burnin =10000,
+                 n.chains = 2, method = 'parallel', thin=10, burnin =1000,
                  modules = "mix",keep.jags.files=F,sample =1000, adapt = 1000,
                  progress.bar=TRUE)
+run<-run0
+save(run, file="/home/henni/WGBAST/out/M74_run_SE2.RData")
 
 run1<-extend.jags(run0,combine=T,sample=1000, thin=10)
-#run2<-extend.jags(run1,combine=F,sample=1000, thin=100)
-
 run<-run1
+save(run, file="/home/henni/WGBAST/out/M74_run_SE2.RData")
+
+run2<-extend.jags(run1,combine=F,sample=1000, thin=100)
+run<-run2
+save(run, file="/home/henni/WGBAST/out/M74_run_SE2.RData")
+
+run3<-extend.jags(run2,combine=T,sample=10000, thin=100)
+run<-run3
+save(run, file="/home/henni/WGBAST/out/M74_run_SE2.RData")
+
+
+
+run3<-extend.jags(run1,combine=F,sample=10000, thin=100)
+run<-run3
+save(run, file="/home/henni/WGBAST/out/M74_run_SE2tmp.RData")
+
+
+
 summary(run)
 summary(run, var="YSFM")
-summary(run, var="a_t")
-summary(run, var="b_t")
-summary(run, var="sd_t")
 
 plot(run)
 plot(run, var="YSFM")
@@ -136,16 +156,11 @@ plot(run, var="b_t")
 plot(run, var="sd_t")
 
 save(dfFI, file="dfFI.RData")
-save(run, file="M74_run.RData")
-
 load("M74_run.RData")
-
-load("M74_run_SE.RData") # Ruotsin data mukana
-
-load("M74_run_SE2.RData") # Testiajo, isM74==2 silloin kun thiam<0.5
-
-load("M74_run_test.RData")
 load("M74_run_prior2.RData")
+
+load("M74_run_SE2.RData")
+
 
 sum_run<-summary(run)
 rnames<-rownames(sum_run)

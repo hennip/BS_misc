@@ -66,7 +66,8 @@ M1_P<-"model{
       logit(surv_M74)<-Pmean # annual M74 survival
       mean_M74 <- 1 - surv_M74 #probability of offspring dying because of M74 mortality
   
-  
+    etaq~dunif(2,1000)
+
   
 
   # for (i in 1:344){ # number of rows in the Swedish data 
@@ -81,8 +82,8 @@ M1_P<-"model{
 #           #yy=dfSE$yy, stock=dfSE$stock, Females=dfSE$Females, xx=dfSE$xx)
 
 var_names=c(#"mean_M74", 
-            "a_t", "b_t", "sd_t", 
-"mu_YSFM", "eta_YSFM","cv_thiam", "mupsi", "cvpsi", "mu_mean_thiam" )
+            "a_t", "b_t", "sd_t", "etaq",
+"mu_YSFM", "eta_YSFM","cv_thiam", "mupsi", "cvpsi", "mu_mean_thiam", "cv_mean_thiam")
 #inits=list(p=array(0.01,dim=c(1754,2)))
 
 run0 <- run.jags(M1_P,

@@ -21,6 +21,7 @@
 # library(coda)
 
 #source("00-basics/tidy-functions.r")
+source("run-this-first.R")
 
 pathM74old<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2021/")
 pathM74<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2023/")
@@ -50,8 +51,10 @@ df<-dat%>%
 
 dfFI<-df%>% 
   select(YEAR, year, rivername,stock, eggs, surv_eggs,YSFM, thiam, thiam2)%>%
-  mutate(isM74=ifelse(thiam<1, 2, ifelse(is.na(thiam)==T, NA, 1)))
+  mutate(isM74_old=ifelse(thiam<0.5, 2, ifelse(is.na(thiam)==T, NA, 1)))%>%
+  mutate(isM74=ifelse(thiam<0.98, 2, ifelse(is.na(thiam)==T, NA, 1)))
 
+#View(filter(dfFI, is.na(isM74)==F, isM74!=isM74_old))
 
 # REMOVE THE LAST YEAR'S DATA (NOT HATCHED YET)
 #View(filter(dfFI, YEAR==2022 ))
