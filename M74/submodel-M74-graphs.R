@@ -40,6 +40,7 @@ boxplot.df<-function(param, X){ # chain object, variable name, values to x-axis
 
 chains<-as.mcmc.list(run)
 chainsP<-as.mcmc.list(runP)
+#chainsP<-as.mcmc.list(run)
 
 summary(run, var="mu_mean_thiam")
 summary(run, var="muq")
