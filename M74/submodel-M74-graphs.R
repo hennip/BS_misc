@@ -1,5 +1,7 @@
 
-
+#load("M74_run_SE2.RData")
+load("M74_run_sd_t.RData")
+load("M74_run_sd_t_prior.RData")
 
 
 plot_densities<-function(chains, chainsP, varname){
@@ -42,21 +44,81 @@ chains<-as.mcmc.list(run)
 chainsP<-as.mcmc.list(runP)
 #chainsP<-as.mcmc.list(run)
 
-summary(run, var="mu_mean_thiam")
 summary(run, var="muq")
+summary(run, var="etaq")
+
+#summary(run, var="mort_M74")
+summary(run, var="sd_t")
+
+plot(run, var="muq")
+plot(run, var="etaq")
+plot(run, var="mumu")
+plot(run, var="cvmu")
+plot(run, var="musd")
+plot(run, var="cvsd")
+plot(run, var="a_t")
+plot(run, var="b_t")
+plot(run, var="sd_t")
+plot(run, var="mu_sd_t")
+plot(run, var="cv_sd_t")
+#plot(run, var="mort_M74") #Näitä on 518kpl
 
 par(mfrow=c(3,3),mar=c(2.5,4,4,1))
 plot_densities(chains, chainsP, "a_t")
 plot_densities(chains, chainsP, "b_t")
-plot_densities(chains, chainsP, "sd_t")
+#plot_densities(chains, chainsP, "sd_t")
 plot_densities(chains, chainsP, "mu_YSFM")
 plot_densities(chains, chainsP, "eta_YSFM")
-plot_densities(chains, chainsP, "mupsi")
-plot_densities(chains, chainsP, "cvpsi")
-plot_densities(chains, chainsP, "cv_thiam")
-plot_densities(chains, chainsP, "cv_mean_thiam")
+plot_densities(chains, chainsP, "mumu")
+plot_densities(chains, chainsP, "cvmu")
+plot_densities(chains, chainsP, "musd")
+plot_densities(chains, chainsP, "cvsd")
+plot_densities(chains, chainsP, "mu_sd_t")
+plot_densities(chains, chainsP, "cv_sd_t")
+#plot_densities(chains, chainsP, "mu_thiam")
+#plot_densities(chains, chainsP, "sd_thiam")
 #plot_densities(chains, chainsP, "etaq")
 
+plot_densities(chains, chainsP, "[1,1,2]")
+plot_densities(chains, chainsP, "q[2,1,2]")
+plot_densities(chains, chainsP, "q[3,1,2]")
+
+par(mfrow=c(3,3),mar=c(2.5,4,4,1))
+for(y in 1:37){
+  varname<-paste0("q[",y,",1,2]")
+  plot(density(chains[,varname][[1]]), main=varname)
+ # lines(density(chains[,varname][[2]]))
+  #plot(hist(chains[,varname][[1]]), main=varname)
+}
+
+
+par(mfrow=c(3,3),mar=c(2.5,4,4,1))
+for(y in 1:37){
+  varname<-paste0("mort_M74[",y,",1]")
+  plot(density(chains[,varname][[1]]), main=varname)
+  lines(density(chains[,varname][[2]]))
+  #plot(hist(chains[,varname][[1]]), main=varname)
+}
+
+par(mfrow=c(3,3),mar=c(2.5,4,4,1))
+for(y in 1:37){
+  varname<-paste0("mu_surv_M74[",y,",1]")
+  plot(density(chains[,varname][[1]]), main=varname)
+  lines(density(chains[,varname][[2]]))
+  #plot(hist(chains[,varname][[1]]), main=varname)
+}
+for(y in 1:37){
+  varname<-paste0("mu_surv_M74[",y,",1]")
+  traceplot(chains[,varname], main=varname)
+}
+
+par(mfrow=c(3,3),mar=c(2.5,4,4,1))
+for(y in 10:18){
+  varname<-paste0("E_thiam[",y,",1]")
+  plot(density(chains[,varname][[1]]), main=varname, xlim=c(0,10))
+  lines(density(chains[,varname][[2]]))
+  #plot(hist(chains[,varname][[1]]), main=varname)
+}
 
 # plot(density(chains[,"mu_YSFM"][[1]]), main="mu_YSFM", xlim=c(0,1))
 # lines(density(chains[,"mu_YSFM"][[2]]))

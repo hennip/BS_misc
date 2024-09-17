@@ -10,7 +10,6 @@ library(gridExtra)
 library(writexl)
 library(readxl)
 
-library(rjags)
 library(runjags)
 library(coda)
 
@@ -20,8 +19,9 @@ library(abind)
 
 
 
-load.module("mix")
-load.module("glm")
+ library(rjags)
+ load.module("mix")
+ load.module("glm")
 
 
 

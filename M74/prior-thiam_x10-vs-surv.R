@@ -137,17 +137,25 @@ tau<-1/pow(sd,2)
 
 }"
 
-cat(M2,file="prior-obs.txt")
+#cat(M2,file="prior-obs.txt")
 
 data<-list( 
-  mu.a=mua,t.a=taua, 
-  M.b=Mb, T.b=taub, 
-  M.sd=Msd, T.sd=tausd,
+ # mu.a=mua,t.a=taua, 
+ # M.b=Mb, T.b=taub, 
+ # M.sd=Msd, T.sd=tausd,
   tiam=tiam, n=n
 )
 
-system.time(jm<-jags.model('prior-obs.txt',
-                           n.adapt=100,data=data,n.chains=2))
+ run.jags(M2,
+          monitor= c("p", "sd", "a", "b"),data=data, #inits = inits,
+          n.chains = 2, method = 'parallel', thin=10, burnin =1000,
+          modules = "mix",keep.jags.files=F,sample =5000, adapt = 1000,
+          progress.bar=TRUE)
+
+
+chains1<-run.jags(M2,monitor=c("p", "sd", "a", "b"),
+                  n.iter=5000,thin=1,
+                         adapt=1000,data=data,n.chains=2)
 
 
 
@@ -165,7 +173,7 @@ summary(chains1[,"sd"])
 
 
 df<-boxplot.df(chains1,"p",tiam)
-df<-as.tibble(df)
+df<-as_tibble(df)
 df<-filter(df, x>0)
 
 ggplot(df, aes(x, group=x))+
