@@ -14,49 +14,53 @@
 # programmed:	2012 hpulkkin
 ## ~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
 
-dat<-read_xlsx("tags/dat/datR_TagRecaps13_incl_river.xlsx", na="NA", col_names = T)
-
+dat<-read.table(
+#"tags/dat/datR_TagRecaps13.txt",
+"tags/dat/TagsTornioSimo.txt",
+header=T)
 summary(dat)
 dim(dat)
 
-summary(dat$rel_year)
-summary(as.factor(dat$rec_year))
-summary(as.factor(dat$rec_day))
+df<-as_tibble(dat)
 
-dat<-subset(dat, river=="Tornionjoki")
+dat<-df%>%filter(river=="Tornionjoki")
 
 
 
-# Correct rec_year-variable
+summary(dat$YEAR)
+summary(as.factor(dat$RECyear))
+summary(as.factor(dat$RECday))
+
+# Correct RECyear-variable
 #===============================
-#RecYear<-dat$rec_year
+#RecYear<-dat$RECyear
 
 apu<-vector()
-for(i in 1:length(dat$rec_year)){
-  if(is.na(dat$rec_year[i])==F && dat$rec_day[i]!=99){
-    if(dat$rec_year[i]>=0 && dat$rec_year[i]<30){ apu[i]<-dat$rec_year[i]+2000 }
-    if(dat$rec_year[i]>=80 && dat$rec_year[i]<=99){ apu[i]<-dat$rec_year[i]+1900 }
-    if(dat$rec_year[i]>1000){ apu[i]<-dat$rec_year[i] }
+for(i in 1:length(dat$RECyear)){
+  if(is.na(dat$RECyear[i])==F && dat$RECday[i]!=99){
+    if(dat$RECyear[i]>=0 && dat$RECyear[i]<30){ apu[i]<-dat$RECyear[i]+2000 }
+    if(dat$RECyear[i]>=80 && dat$RECyear[i]<=99){ apu[i]<-dat$RECyear[i]+1900 }
+    if(dat$RECyear[i]>1000){ apu[i]<-dat$RECyear[i] }
   }
-  if(is.na(dat$rec_year[i])==T || dat$rec_day[i]==99){
+  if(is.na(dat$RECyear[i])==T || dat$RECday[i]==99){
     apu[i]<-NA
   }
 }
 
 summary(as.factor(apu))
 
-dat$rec_year<-apu
+dat$RECyear<-apu
 summary(dat)
 
 # =================================
-# Define RecOK variable which gives 0 for those that rec_year is NA 
+# Define RecOK variable which gives 0 for those that RECyear is NA 
 # and those that have been recaptured outside six years from release.
 # Others are ok, RecOK==1
 
-RecOK<-rep(1,length(dat$rec_year))
-for(i in 1:length(dat$rec_year)){
-   if(is.na(dat$rec_year[i])==T ||   # rec_year[i]'s that are NA
-    (dat$rec_year[i]<dat$rel_year[i] || dat$rec_year[i]>dat$rel_year[i]+5)){  # Those that have not been recaptured within six years from release
+RecOK<-rep(1,length(dat$RECyear))
+for(i in 1:length(dat$RECyear)){
+   if(is.na(dat$RECyear[i])==T ||   # RECyear[i]'s that are NA
+    (dat$RECyear[i]<dat$YEAR[i] || dat$RECyear[i]>dat$YEAR[i]+5)){  # Those that have not been recaptured within six years from release
       RecOK[i]<-0
    } 
 } 
@@ -72,7 +76,7 @@ sum(RecOK)
 
 summary(dat$gear)
 
-levels(as.factor(dat$rec_year)) # check what's the latest recapture year!
+levels(as.factor(dat$RECyear)) # check what's the latest recapture year!
 
 # Inform the path where the .csv-files will be saved
 path<-"tags/Files_csv"
@@ -303,7 +307,7 @@ summary(ROdat$gear)
 # ===================
 ROdat<-subset(dat, w_r=="R" & fishery=="O")
 RODNdat<-subset(ROdat, gear=="drifnet" | gear=="driftnet"| gear=="Driftnet" | gear=="DRIFTNET"| 
-(gear=="gillnet" & rec_year<=2008)| (gear=="GILLNET" & rec_year<=2008)| (gear=="Gillnet" & rec_year<=2008))
+(gear=="gillnet" & RECyear<=2008)| (gear=="GILLNET" & RECyear<=2008)| (gear=="Gillnet" & RECyear<=2008))
 dim(RODNdat)
 # 16627 
 dat1tot<-subset(RODNdat, RecOK==1)
@@ -318,7 +322,7 @@ write.table(round(R_ODN), file=paste(sep="", path, "/Reared_O_DN.csv"), sep=",")
 # ===================
 ROdat<-subset(dat, w_r=="R" & fishery=="O")
 ROLLdat<-subset(ROdat, gear=="longline" | gear=="Longline" | gear=="LONGLINE"| gear=="ANGLING"|
-(gear=="gillnet" & rec_year>2008)| (gear=="GILLNET" & rec_year>2008)| (gear=="Gillnet" & rec_year>2008))
+(gear=="gillnet" & RECyear>2008)| (gear=="GILLNET" & RECyear>2008)| (gear=="Gillnet" & RECyear>2008))
 dim(ROLLdat)
 # 3273
 dat1tot<-subset(ROLLdat, RecOK==1)
@@ -430,12 +434,13 @@ dat1tot<-subset(WUdat, RecOK==1)
 dat2tot<-subset(WUdat, RecOK==0)
 N1<-RelYearSum(dat1tot)
 N2<-RelYearSum(dat2tot)
+#N1<-rep(0,length(N2))
 
 W_U<-TAGS.TOT(dat1tot, N1, N2)
 write.table(round(W_U), file=paste(sep="", path, "/Wild_U.csv"), sep=",")
 
 # T?t? ei kannata p?ivitt??, koska osa merkeist? katoaa v?lille 
-#(rec_day=99:ien jako ei toimi koska tunnettuja palautuskuukausia ei ole
+#(RECday=99:ien jako ei toimi koska tunnettuja palautuskuukausia ei ole
 # olemassa joka kohortille)
 
 # Total coastal catch wild
@@ -451,8 +456,8 @@ dim(WCDNdat)
 dat1tot<-subset(WCDNdat, RecOK==1)
 dat2tot<-subset(WCDNdat, RecOK==0)
 N1<-RelYearSum(dat1tot)
-#N2<-RelYearSum(dat2tot)
-#N2<-rep(0, length(N1))
+N2<-RelYearSum(dat2tot)
+N2<-rep(0,length(N1))
 
 W_CDN<-TAGS.TOT(dat1tot, N1, N2)
 write.table(round(W_CDN), file=paste(sep="", path, "/Wild_C_DN.csv"), sep=",")
@@ -580,4 +585,5 @@ N2<-RelYearSum(dat2tot)
 
 W_R<-TAGS.TOT(dat1tot, N1, N2)
 write.table(round(W_R), file=paste(sep="", path, "/Wild_R.csv"), sep=",")
+
 

@@ -13,7 +13,7 @@
 ## ~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
 
 dat<-read.table(
-"C:/Biom/FullLifeHistoryModel/2012/data/der/tags/datR_Releases12.txt", 
+"tags/dat/datR_Releases12.txt", 
 header=T)
 summary(dat)
 
