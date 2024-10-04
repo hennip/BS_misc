@@ -52,3 +52,10 @@ rsconnect/
 
 run-this-first.R
 *.txt
+*.bkp
+*.drawio
+*.csv
+*.doc
+*.docx
+*.xlsx
+*.xls
