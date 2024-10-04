@@ -23,8 +23,8 @@
 #source("00-basics/tidy-functions.r")
 source("run-this-first.R")
 
-pathM74old<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2021/")
-pathM74<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2023/")
+pathM74old<-paste0(pathMain,"WGBAST/dat/SubE_M74/2021/")
+pathM74<-paste0(pathMain,"WGBAST/dat/SubE_M74/2023/")
 
 # FI data
 dat<-read_xlsx(path=str_c(pathM74,"dat/orig/Finnish_M74_data-2022_paivitetty_TPa_21_01_2023.xlsx"), 
@@ -101,7 +101,7 @@ dfSE<-df2%>%
   full_join(df1) # df1 has correct stock numbers
 
 # Check that stock >= 5 for all swedish stocks
-dfSE%>%filter(stock<5)
+#dfSE%>%filter(stock<5)
 #View(dfSE)
 
 
