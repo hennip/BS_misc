@@ -132,17 +132,21 @@ tau<-1/pow(sd,2)
 # sd~dlnorm(-0.04,10)
  a~dnorm(-5,0.1)
  b~dlnorm(0.001,5)
- sd~dlnorm(-0.04,10)
-
+ #sd~dlnorm(-0.04,10)
+sd~dlnorm(M_sd,T_sd)
+M_sd<- log(mu_sd)-0.5/T_sd
+mu_sd_t[y]~dlnorm(log(mux)-0.5*log(cvx*cvx+1), 1/log(cvx*cvx+1))
+mux<-
+cvx<-
 
 }"
 
 cat(M2,file="prior-obs.txt")
 
 data<-list( 
-  mu.a=mua,t.a=taua, 
-  M.b=Mb, T.b=taub, 
-  M.sd=Msd, T.sd=tausd,
+  # mu.a=mua,t.a=taua, 
+  # M.b=Mb, T.b=taub, 
+  # M.sd=Msd, T.sd=tausd,
   tiam=tiam, n=n
 )
 
@@ -165,7 +169,7 @@ summary(chains1[,"sd"])
 
 
 df<-boxplot.df(chains1,"p",tiam)
-df<-as.tibble(df)
+df<-as_tibble(df)
 df<-filter(df, x>0)
 
 ggplot(df, aes(x, group=x))+
@@ -175,7 +179,7 @@ ggplot(df, aes(x, group=x))+
   coord_cartesian(ylim=c(0,1))+
   scale_x_continuous(breaks = scales::pretty_breaks(n = 5))+
   scale_y_continuous(breaks = scales::pretty_breaks(n = 5))+
-  labs(title=str_c("M74 survival, b_t=",b))+
+#  labs(title=str_c("M74 survival, b_t=",b))+
   xlab("Thiamine nmol/g")+
   geom_vline(xintercept=1)
 
