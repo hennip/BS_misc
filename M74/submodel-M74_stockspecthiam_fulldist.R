@@ -15,20 +15,29 @@ M1<-"model{
   # Haudonta-aineisto, FI
   for (i in 1:N_FI){ #number of females in the Finnish data
     x[i]~dbin(p[i, j[i]], Eggs[i]) # likelihood function: x = number of surviving eggs, p= probability of survival, Egg = total number of eggs
-    j[i]~dcat(q[year[i],stockFI[i],1:2])
+    j[i]~dcat(q[year[i],stockFI[i],1:2]) # dcat arpoo yksilön j-indeksin luokkiin M74 / ei M74 
     x_rep[i]~dbin(p[i, j[i]], Eggs[i]) 
     
     p[i,1] <- S_YSFM[i] #survival from normal YSFM
     p[i,2] <- S_YSFM[i]*S_M74[i] #survival from both YSFM and M74
 
     logit(S_M74[i])<-P[i] # M74 mortality
-    P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t,2))
+    #P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t,2))
+    P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t[year[i]],2))
+    #! sd_t olisi tässä yleinen keskihajonta sille kuinka paljon
+    # kuolleisuus voi poiketa pelkän tiamiinin mukaan määräytyvästä
+    # Pitäisikö tämän hajonnan linkittyä johonkin muista hajontaparametreista,
+    # vai onko selkeästi oma juttunsa?
+    # Vaihtoehto olisi sd_t[i]~D(E_sd_t[year[i], cv), jolloin estimoitaisiin 
+    # vuosittaiset poikkeamat tiamiinin antamasta ennusteesta.
     
+    
+    # Tiamiinien jakauma, tässä opitaan siitä mikä tiamiinipitoisuus olisi 
+    # tiettynä vuonna tietyssä kannassa. Ennusteet vuosille joista ei ole mittauksia
     thiam_obs[i]~dlnorm(M_thiam_obs[i], T_thiam_obs[i])
-    
     M_thiam_obs[i]<-E_thiam[year[i],stockFI[i]]-0.5/T_thiam_obs[i]
     T_thiam_obs[i]<-1/log( pow(cv_thiam_obs[year[i],stockFI[i]],2) +1 )
- 
+
     M_YSFM[i]~dbeta(a_YSFM,b_YSFM) # normal yolk-sac-fry mortality
     S_YSFM[i]<-1-M_YSFM[i]
   
@@ -43,11 +52,13 @@ M1<-"model{
         
     for (s in 1:Nstocks){
       cv_thiam_obs[y,s]~dunif(0.1,2) # Huom, havaintojen cv:t riippumattomia toisistaan.
+      # Aiheuttaako tämä ongelmia survivalin estimoinnille? Jos tiamiinimittausta ei ole, cv tulee priorista
 
-      # Distribution of thiamin in year y at stock s
+      # E_thiam: Tiamiinin jakauma vuonna y kannassa s sovitetaan logN-jakaumaan jotta
+      # opitaan vuosikohtaisesta odotusarvosta ja hajonnasta
+      # -> näiden avulla voidaan ennustaa tiamiinit esim. ruotsin kannoille
       E_thiam[y,s]~dlnorm(M_mean_thiam[y], 1/log(pow(sd_thiam[y]/mu_thiam[y],2)+1))
-      
-      logit_surv[y,s]~dnorm(a_t+b_t*E_thiam[y,s],1/pow(sd_t,2))
+      logit_surv[y,s]~dnorm(a_t+b_t*E_thiam[y,s],1/pow(sd_t[y],2))
       logit(mu_surv_M74[y,s])<-logit_surv[y,s] # thiamin based annual & stock specific survival
 
       q[y,s,1]<-1-q[y,s,2] # Proportion that does not have M74
@@ -58,8 +69,11 @@ M1<-"model{
       
     }
     M_mean_thiam[y]<-log(mu_thiam[y])-0.5*log(pow(sd_thiam[y]/mu_thiam[y],2)+1)
+    sd_t[y]~dlnorm(M_sd_t[y],T_sd_t)
+    M_sd_t[y]<-mu_sd_t[y]-0.5/T_sd_t
+    mu_sd_t[y]~dlnorm(log(mux)-0.5*log(cvx*cvx+1), 1/log(cvx*cvx+1))
 
-    mu_thiam[y]~dlnorm(log(mumu)-0.5/Tmu, Tmu)# keskimääräinen tiamiinitaso vuonna y, hierarkkiset parametrit samat yli vuosien
+    mu_thiam[y]~dlnorm(log(mumu)-0.5/Tmu, Tmu)# keskimääräinen tiamiinitaso vuonna y, hierarkkiset parametrit yli vuosien
     sd_thiam[y]~dlnorm(log(musd)-0.5/Tsd, Tsd) # Kantojen välinen vaihtelu  
       
     aq[y]<-muq[y]*etaq
@@ -76,7 +90,9 @@ M1<-"model{
   # See prior-thiam-vs-surv.r
   a_t~dnorm(-5,0.1)
   b_t~dlnorm(0.001,5)
-  sd_t~dlnorm(-0.04,10)
+  #sd_t~dlnorm(-0.04,10)
+  T_sd_t<-1/log( pow(cv_sd_t,2) +1 )
+  cv_sd_t~dunif(0.001,2)
 
   mumu~dunif(0.01,10) 
   cvmu~dunif(0.1,2)
@@ -90,8 +106,10 @@ M1<-"model{
 
 }"
 
+prior<-F
 
-data=list(
+if(prior==F){
+  data=list(
   N_SE=length(dfSE$yy),yy=dfSE$yy, stockSE=dfSE$stock, Females=dfSE$Females, xx=dfSE$xx,
   N_FI=length(dfFI$eggs),Eggs=dfFI$eggs, year=dfFI$year, stockFI=dfFI$stock,
   x=dfFI$surv_eggs, j=dfFI$isM74,
@@ -100,16 +118,35 @@ data=list(
   Nyears=max(dfFI$year),
   thiam_obs=dfFI$thiam2
   #thiam_obs=dfFI$thiam
-) 
+) }else{
 
+  data=list(
+    N_SE=1,yy=1, stockSE=2, Females=100, 
+    N_FI=1,Eggs=100, year=1, stockFI=2,
+    #Nstocks=max(dfFI$stock), 
+    Nstocks=2, 
+    Nyears=1
+  ) 
+  
+}
+data
 
 var_names=c("mort_M74", "muq", "etaq","x_rep",
             "a_t", "b_t", "sd_t", 
 "mu_YSFM", "eta_YSFM",#"cv_thiam_obs", 
 "mumu", "cvmu", 
 "musd", "cvsd", 
-"mu_mean_thiam", "cv_mean_thiam" )
+"mu_thiam", "sd_thiam" )
 #inits=list(p=array(0.01,dim=c(1754,2)))
+
+if(prior==T){
+  runP <- run.jags(M1,
+                   monitor= var_names,data=data, #inits = inits,
+                   n.chains = 2, method = 'parallel', thin=10, burnin =1000,
+                   modules = "mix",keep.jags.files=F,sample =100000, adapt = 1000,
+                   progress.bar=TRUE)
+  
+}
 
 run0 <- run.jags(M1,
                  monitor= var_names,data=data, #inits = inits,
