@@ -137,7 +137,7 @@ data
 
 
 var_names=c(
-  "cv_sd_t", "E_sd_t",
+   "E_sd_t", "sd_t",
   "mort_M74", 
             "mu_surv_M74", "E_thiam",
             "muq", "etaq","aq","bq","q",
@@ -187,9 +187,14 @@ save(run, file=paste0("/home/henni/WGBAST/out/",modelName,".RData"))
 
 
 
-run3<-extend.jags(run1,combine=F,sample=10000, thin=100)
+run4<-extend.jags(run3,combine=F,sample=10000, thin=100)
 run<-run3
 save(run, file=paste0("/home/henni/WGBAST/out/",modelName,".RData"))
+
+run5<-extend.jags(run3,combine=F, add.monitor="sd_t",sample=10000, thin=100)
+run<-run3
+save(run, file=paste0("/home/henni/WGBAST/out/",modelName,".RData"))
+
 
 load("M74_run_X.RData")
 
@@ -199,6 +204,7 @@ summary(run, var="YSFM")
 summary(run, var="q[30,1,2]")
 summary(run, var="mu_surv_M74[30,1]")
 summary(run, var="E_thiam[30,1]")
+summary(run, var="cv_sd_t")
 
 plot(run)
 plot(run, var="YSFM")
