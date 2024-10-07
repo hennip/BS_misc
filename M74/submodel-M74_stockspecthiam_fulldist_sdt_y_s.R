@@ -150,7 +150,7 @@ var_names=c(
 
 #inits=list(p=array(0.01,dim=c(1754,2)))
 
-modelName<-"M74_run_sd_t"
+modelName<-"M74_run_sd_t_sy"
 
 
 if(prior==T){
