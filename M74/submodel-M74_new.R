@@ -96,6 +96,9 @@ M1<-"model{
   }
 }"
 
+# HUOMIOT: mort_M74:n epävarmuudesta tulee nyt hurjan suurta. Kumuloituuko tämä
+# nyt q-parametrista, vai Pmean-parametrista?
+
 
 data=list(
   N_SE=length(dfSE$yy),yy=dfSE$yy, stockSE=dfSE$stock, Females=dfSE$Females, xx=dfSE$xx,
@@ -124,6 +127,12 @@ run1<-extend.jags(run0,combine=T,sample=1000, thin=10)
 
 run<-run1
 summary(run)
+summary(run, var="q[30,1,2]")
+summary(run, var="mu_surv_M74[30,1]")
+summary(run, var="E_thiam[30]")
+
+
+summary(run, var="mu")
 summary(run, var="YSFM")
 summary(run, var="a_t")
 summary(run, var="b_t")
@@ -146,6 +155,10 @@ load("M74_run_SE2.RData") # Testiajo, isM74==2 silloin kun thiam<0.5
 
 load("M74_run_test.RData")
 load("M74_run_prior2.RData")
+
+load("M74_run_sd_t.RData")
+
+
 
 sum_run<-summary(run)
 rnames<-rownames(sum_run)
