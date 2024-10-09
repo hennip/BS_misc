@@ -9,7 +9,7 @@ dfFI
 dfSE
 
 
-M2<-"model{
+M3<-"model{
   
   
   # Haudonta-aineisto, FI
@@ -24,7 +24,11 @@ M2<-"model{
     logit(S_M74[i])<-P[i] # M74 mortality
     #P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t,2))
     #P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t[year[i]],2))
-    P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t[year[i], stockFI[i]],2))
+    #P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t[year[i], stockFI[i]],2))
+    P[i]~dnorm(E_P[i],1/(pow(cv_t*E_P[i],2)))
+    E_P[i]<-a_t+b_t*thiam_obs[i]
+
+    
     #! sd_t olisi tässä yleinen keskihajonta sille kuinka paljon
     # kuolleisuus voi poiketa pelkän tiamiinin mukaan määräytyvästä
     # Pitäisikö tämän hajonnan linkittyä johonkin muista hajontaparametreista,
@@ -36,7 +40,7 @@ M2<-"model{
     # Tiamiinien jakauma, tässä opitaan siitä mikä tiamiinipitoisuus olisi 
     # tiettynä vuonna tietyssä kannassa. Ennusteet vuosille joista ei ole mittauksia
     thiam_obs[i]~dlnorm(M_thiam_obs[i], T_thiam_obs[i])
-    thiam_rep[i]~dlnorm(M_thiam_obs[i], T_thiam_obs[i])
+    thiam_obs_rep[i]~dlnorm(M_thiam_obs[i], T_thiam_obs[i])
     
     M_thiam_obs[i]<-E_thiam[year[i],stockFI[i]]-0.5/T_thiam_obs[i]
     T_thiam_obs[i]<-1/log( pow(cv_thiam_obs[year[i],stockFI[i]],2) +1 )
@@ -61,8 +65,11 @@ M2<-"model{
       # opitaan vuosikohtaisesta odotusarvosta ja hajonnasta
       # -> näiden avulla voidaan ennustaa tiamiinit esim. ruotsin kannoille
       E_thiam[y,s]~dlnorm(M_mean_thiam[y], 1/log(pow(sd_thiam[y]/mu_thiam[y],2)+1))
-      logit_surv[y,s]~dnorm(a_t+b_t*E_thiam[y,s],1/pow(sd_t[y,s],2))
-      logit(mu_surv_M74[y,s])<-logit_surv[y,s] # thiamin based annual & stock specific survival
+      #logit_surv[y,s]~dnorm(a_t+b_t*E_thiam[y,s],1/pow(sd_t[y,s],2))
+      logit_surv[y,s]~dnorm(E_logit_surv[y,s],1/(pow(cv_t*E_logit_surv[y,s],2)))
+      E_logit_surv[y,s]<-a_t+b_t*E_thiam[y,s]
+
+     logit(mu_surv_M74[y,s])<-logit_surv[y,s] # thiamin based annual & stock specific survival
 
       q[y,s,1]<-1-q[y,s,2] # Proportion that does not have M74
       q[y,s,2]~dbeta(aq[y],bq[y])T(0.01,0.99) #Proportion that has M74
@@ -70,12 +77,12 @@ M2<-"model{
       # proportion of all offspring that dies because of M74
       mort_M74[y,s] <- 1-( (q[y,s,1]*1)+(q[y,s,2]*mu_surv_M74[y,s]) )
       
-      sd_t[y,s]~dlnorm(M_sd_t[y,s], cv_sd_t)
-      M_sd_t[y,s]<-log(E_sd_t[y])-0.5*log(pow(cv_sd_t,2)+1)
+  #    sd_t[y,s]~dlnorm(M_sd_t[y,s], cv_sd_t)
+  #    M_sd_t[y,s]<-log(E_sd_t[y])-0.5*log(pow(cv_sd_t,2)+1)
     }
     M_mean_thiam[y]<-log(mu_thiam[y])-0.5*log(pow(sd_thiam[y]/mu_thiam[y],2)+1)
 #    sd_t[y]~dlnorm(M_sd_t,T_sd_t)
-    E_sd_t[y]~dlnorm(M_E_sd_t,T_E_sd_t)
+#    E_sd_t[y]~dlnorm(M_E_sd_t,T_E_sd_t)
     
     mu_thiam[y]~dlnorm(log(mumu)-0.5/Tmu, Tmu)# keskimääräinen tiamiinitaso vuonna y, hierarkkiset parametrit yli vuosien
     sd_thiam[y]~dlnorm(log(musd)-0.5/Tsd, Tsd) # Kantojen välinen vaihtelu  
@@ -84,7 +91,8 @@ M2<-"model{
     bq[y]<-(1-muq[y])*etaq
     muq[y]~dbeta(2,2)T(0.01,0.99)
   }
-cv_sd_t~dunif(0.01,5)
+#cv_sd_t~dunif(0.01,5)
+cv_t~dunif(0.01,5)
 
   # parameters for normal yolk-sac-fry mortality
   a_YSFM<- mu_YSFM * eta_YSFM
@@ -97,14 +105,14 @@ cv_sd_t~dunif(0.01,5)
   b_t~dlnorm(0.001,5)
   #sd_t~dlnorm(-0.04,10)
 
-  # M_sd_t<-mu_sd_t-0.5/T_sd_t
-  # T_sd_t<-1/log( pow(cv_sd_t,2) +1 )
-  # cv_sd_t~dunif(0.001,2)
-  # mu_sd_t~dlnorm(-0.04,10)
-  M_E_sd_t<-mu_E_sd_t-0.5/T_E_sd_t
-  T_E_sd_t<-1/log( pow(cv_E_sd_t,2) +1 )
-  cv_E_sd_t~dunif(0.001,2)
-  mu_E_sd_t~dlnorm(-0.04,10)
+  # # M_sd_t<-mu_sd_t-0.5/T_sd_t
+  # # T_sd_t<-1/log( pow(cv_sd_t,2) +1 )
+  # # cv_sd_t~dunif(0.001,2)
+  # # mu_sd_t~dlnorm(-0.04,10)
+  # M_E_sd_t<-mu_E_sd_t-0.5/T_E_sd_t
+  # T_E_sd_t<-1/log( pow(cv_E_sd_t,2) +1 )
+  # cv_E_sd_t~dunif(0.001,2)
+  # mu_E_sd_t~dlnorm(-0.04,10)
   
 
 
@@ -147,10 +155,8 @@ data
 
 
 var_names=c(
-"thiam_obs",  
-"thiam_rep",  
-#  "P",
-#  "E_sd_t",
+  "cv_t",
+ # "P",
   "sd_t",
   "mort_M74", 
             "mu_surv_M74", "E_thiam",
@@ -160,15 +166,17 @@ var_names=c(
 "mu_YSFM", "eta_YSFM",#"cv_thiam_obs", 
 "mumu", "cvmu", 
 "musd", "cvsd",
+"E_sd_t",
 "mu_E_sd_t", "cv_E_sd_t")
 
 #inits=list(p=array(0.01,dim=c(1754,2)))
 
-modelName<-"M74_run_sd_t_sy"
+#modelName<-"M74_run_sd_t_sy"
+modelName<-"M74_run_cv_t"
 
 
 if(prior==T){
-  runP <- run.jags(M2,
+  runP <- run.jags(M3,
                    monitor= var_names,data=data, #inits = inits,
                    n.chains = 2, method = 'parallel', thin=10, burnin =1000,
                    modules = "mix",keep.jags.files=F,sample =100000, adapt = 1000,
@@ -179,7 +187,7 @@ if(prior==T){
   
   }
 
-run0 <- run.jags(M2,
+run0 <- run.jags(M3,
                  monitor= var_names,data=data, #inits = inits,
                  n.chains = 2, method = 'parallel', thin=10, burnin =1000,
                  modules = "mix",keep.jags.files=F,sample =1000, adapt = 1000,
@@ -205,6 +213,9 @@ run4<-extend.jags(run3,combine=F,sample=10000, thin=100)
 run<-run4
 save(run, file=paste0("/home/henni/WGBAST/out/",modelName,".RData"))
 
+run5<-extend.jags(run4,add.monitor="E_P",combine=F,sample=10000, thin=100)
+run<-run5
+save(run, file=paste0("/home/henni/WGBAST/out/",modelName,".RData"))
 
 
 load("M74_run_X.RData")
@@ -215,6 +226,7 @@ summary(run, var="YSFM")
 summary(run, var="q[30,1,2]")
 summary(run, var="mu_surv_M74[30,1]")
 summary(run, var="E_thiam[30,1]")
+summary(run, var="cv_t")
 summary(run, var="sd_t[30,1]")
 summary(run, var="cv_sd_t")
 

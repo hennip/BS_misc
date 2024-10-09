@@ -19,9 +19,15 @@ M2<-"model{
     x_rep[i]~dbin(p[i, j[i]], Eggs[i]) 
     
     p[i,1] <- S_YSFM[i] #survival from normal YSFM
-    p[i,2] <- S_YSFM[i]*S_M74[i] #survival from both YSFM and M74
+    p[i,2] <- S_YSFM[i]*S_M74[year[i],i,k[i]]] #survival from both YSFM and M74
 
-    logit(S_M74[i])<-P[i] # M74 mortality
+    k[i]~dcat(qq[year[i],stockFI[i],]) # index if the female has 100% M74 mortality or not
+  
+    S_M74[year[i],i,2] <- 0 # Survival 0 when 100% M74 mortality
+
+
+    logit(S_M74[year[i],i,1])<-P[i] # M74 survival when not 100%
+    #logit(S_M74[i])<-P[i] # M74 survival
     #P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t,2))
     #P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t[year[i]],2))
     P[i]~dnorm(a_t+b_t*thiam_obs[i],1/pow(sd_t[year[i], stockFI[i]],2))

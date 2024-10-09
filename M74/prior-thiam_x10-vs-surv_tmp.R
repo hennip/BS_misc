@@ -144,15 +144,9 @@ cvx<-
 #cat(M2,file="prior-obs.txt")
 
 data<-list( 
-<<<<<<< HEAD
   # mu.a=mua,t.a=taua, 
   # M.b=Mb, T.b=taub, 
   # M.sd=Msd, T.sd=tausd,
-=======
- # mu.a=mua,t.a=taua, 
- # M.b=Mb, T.b=taub, 
- # M.sd=Msd, T.sd=tausd,
->>>>>>> ed2a3d00f31a4e09159a90e21d1eeff6f6605038
   tiam=tiam, n=n
 )
 
