@@ -3,6 +3,8 @@
 load("M74_run_sd_t.RData")
 load("M74_run_sd_t_prior.RData")
 
+load("M74_run_sd_t_sy.RData")
+load("M74_run_cv_t.RData")
 
 plot_densities<-function(chains, chainsP, varname){
 plot(density(chains[,varname][[1]]), main=varname)
@@ -43,6 +45,21 @@ boxplot.df<-function(param, X){ # chain object, variable name, values to x-axis
 chains<-as.mcmc.list(run)
 chainsP<-as.mcmc.list(runP)
 #chainsP<-as.mcmc.list(run)
+
+summary(run, var="q[30,1,2]")
+summary(run, var="mu_surv_M74[30,1]")
+summary(run, var="E_thiam[30,1]")
+summary(run, var="sd_t[30,1]")
+summary(run, var="cv_E_sd_t")
+summary(run, var="mu_E_sd_t")
+summary(run, var="cv_t")
+
+
+summary(run, var="P[300]")
+
+
+data
+
 
 summary(run, var="muq")
 summary(run, var="etaq")
