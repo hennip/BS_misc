@@ -14,6 +14,8 @@
 # programmed:	2012 hpulkkin
 ## ~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
 
+# TÄMÄ MODATTU EHKÄ NIIN ETTÄ TOIMII VAIN (?) VILLEILLE KANNOILLE
+
 dat<-read.table(
 #"tags/dat/datR_TagRecaps13.txt",
 "tags/dat/TagsTornioSimo.txt",
