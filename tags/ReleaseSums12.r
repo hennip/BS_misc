@@ -20,6 +20,7 @@ dat<-read_xlsx("tags/dat/Releases12.xlsx", guess_max=5000,col_names=T) |>
   select(-river)
 dat
 
+
 released<-dat |> group_by(YEAR, ManageGroup, w_r) |> 
   summarise(rel=sum(n_tag))
 
@@ -31,6 +32,36 @@ write_xlsx(released, "../../WGBAST_shared/data/carlin_TorneKemi/tagged_Kemijoki.
 
 
 
+dat<-read_xlsx("tags/dat/Releases12.xlsx", guess_max=5000,col_names=T) |> 
+  select(YEAR, country, w_r,n_tag, Reproductive, ManageGroup, river) |> 
+  filter(river=="Tornionjoki", w_r=="R") |> 
+  select(-river)
+dat
+
+released<-dat |> group_by(YEAR, ManageGroup, w_r) |> 
+  summarise(rel=sum(n_tag))
+
+View(released)
+
+released |> ungroup() |>  summarise(N=sum(rel))
+
+write_xlsx(released, "../../WGBAST_shared/data/carlin_TorneKemi/tagged_Torne_Rsp.xlsx")
+
+
+dat<-read_xlsx("tags/dat/Releases12.xlsx", guess_max=5000,col_names=T) |> 
+  select(YEAR, country, w_r,n_tag, Reproductive, ManageGroup, river) |> 
+  filter(river %in% c("Tornionjoki","Simojoki"), w_r=="R") |> 
+  select(-river)
+dat
+
+released<-dat |> group_by(YEAR, ManageGroup, w_r) |> 
+  summarise(rel=sum(n_tag))
+
+View(released)
+
+released |> ungroup() |>  summarise(N=sum(rel))
+
+write_xlsx(released, "../../WGBAST_shared/data/carlin_TorneKemi/tagged_TorneSimo_Rsp.xlsx")
 
 
 

@@ -5,6 +5,7 @@ load("M74_run_sd_t_prior.RData")
 
 load("M74_run_sd_t_sy.RData")
 load("M74_run_cv_t.RData")
+load("M74_kback.RData")
 
 plot_densities<-function(chains, chainsP, varname){
 plot(density(chains[,varname][[1]]), main=varname)
@@ -53,6 +54,60 @@ summary(run, var="sd_t[30,1]")
 summary(run, var="cv_E_sd_t")
 summary(run, var="mu_E_sd_t")
 summary(run, var="cv_t")
+summary(run, var="a_t")
+summary(run, var="b_t")
+
+summary(run, var="E_thiam[5,1]")
+summary(run, var="mu_surv_M74[5,1]")
+
+summary(run, var="E_thiam[10,1]")
+summary(run, var="mu_surv_M74[10,1]")
+
+
+summary(run, var="E_thiam[15,1]")
+summary(run, var="E_thiam[20,1]")
+summary(run, var="E_thiam[30,1]")
+
+summary(run, var="thiam_rep[1047]")
+summary(run, var="thiam_obs[1047]")
+
+
+
+var1<-"thiam_rep[1047]"
+var2<-"thiam_obs[1047]"
+chains[,var1][[1]]
+chains[,var2][[1]]
+plot(density(chains[,var2][[1]]))
+
+plot(density(chains[,var1][[1]], adjust=1))
+plot(density(chains[,var1][[1]], adjust=0.01))
+
+plot(density(chains[,var1][[1]]), lwd=2, main=var1, xlim=c(0,50), ylim=c(0,.1))
+lines(density(chains[,var2][[1]]))
+
+hist(chains[,var2][[1]], breaks=1000)
+
+geom_density?
+
+for(i in 1:15){
+  #i<-1
+  var1<-str_c("P[",i*100,"]")
+  var2<-str_c("E_P[",i*100,"]")
+  plot(density(chains[,var1][[1]]), lwd=2, main=var1)#, ylim=c(0,0.1), xlim=c(-50,50)
+#lines(density(chains[,"P[1000]"][[2]]))
+lines(density(chains[,var2][[1]]))
+}
+
+par(mfrow=c(1,1))
+par(mfrow=c(3,3))
+for(i in 15:180){
+#  i<-1
+  var1<-str_c("thiam_rep[",i*10,"]")
+  var2<-str_c("thiam_obs[",i*10,"]")
+  plot(density(chains[,var1][[1]]/10), lwd=2, main=var1, xlim=c(0,50), ylim=c(0,.7))
+  lines(density(chains[,var2][[1]]))
+}
+
 
 
 summary(run, var="P[300]")

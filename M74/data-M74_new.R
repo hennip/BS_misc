@@ -21,10 +21,10 @@
 # library(coda)
 
 #source("00-basics/tidy-functions.r")
-source("run-this-first.R")
+source("../run-this-first-BS_misc.R")
 
-pathM74old<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2021/")
-pathM74<-paste0(pathMain,"01-Projects/WGBAST/SubE_M74/2023/")
+pathM74old<-"../../01-Projects/WGBAST/SubE_M74/2021/"
+pathM74<-"../../01-Projects/WGBAST/SubE_M74/2023/"
 
 # FI data
 dat<-read_xlsx(path=str_c(pathM74,"dat/orig/Finnish_M74_data-2022_paivitetty_TPa_21_01_2023.xlsx"), 
@@ -50,9 +50,10 @@ df<-dat%>%
 
 
 dfFI<-df%>% 
-  select(YEAR, year, rivername,stock, eggs, surv_eggs,YSFM, thiam, thiam2)%>%
+  select(YEAR, year, rivername,stock, eggs, surv_eggs,YSFM, thiam, thiam2, `100% mortality`)%>%
   mutate(isM74_old=ifelse(thiam<0.5, 2, ifelse(is.na(thiam)==T, NA, 1)))%>%
-  mutate(isM74=ifelse(thiam<0.98, 2, ifelse(is.na(thiam)==T, NA, 1)))
+  mutate(isM74=ifelse(thiam<0.98, 2, ifelse(is.na(thiam)==T, NA, 1))) |> 
+mutate(isM74_100=ifelse(YSFM==100,2,1))
 
 #View(filter(dfFI, is.na(isM74)==F, isM74!=isM74_old))
 

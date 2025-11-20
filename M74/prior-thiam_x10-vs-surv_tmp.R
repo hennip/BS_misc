@@ -49,77 +49,78 @@ ggplot(df) +
   labs(title=paste(sep="","a=",a," b=",b))+
   geom_vline(xintercept=0)
 
-# Sovitetaan P:t edellisestä ja estimoidaan a, b ja sd
+# # Sovitetaan P:t edellisestä ja estimoidaan a, b ja sd
+# 
+# 
+# M2<-"
+# model{
+# for(i in 1:n){
+# 
+# P[i]~dnorm(mu[i],tau)
+# mu[i]<-a+b*tiam[i]
+# }
+# tau<-1/pow(sd,2)
+# 
+# a~dunif(-10,10)#dnorm(1,0.01)
+# b~dunif(0,5)#dlnorm(-3.4,0.43)
+# sd~dunif(0.001,5)#dlnorm(1,0.1)
+# 
+# aX~dunif(0,10)#dnorm(1,0.01)
+# bX~dunif(0,10)#dlnorm(-3.4,0.43)
+# sdX~dunif(0.001,5)#dlnorm(1,0.1)
+# }"
+# 
+# cat(M2,file="prior-tiam.txt")
+# 
+# data<-list(tiam=tiam,P=P, n=n)
+# 
+# system.time(jm<-jags.model('prior-tiam.txt',
+#                            n.adapt=100,data=data,n.chains=2))
+# 
+# 
+# system.time(chains1<-coda.samples(jm,
+#                                   variable.names=c(
+#                                     #"p",
+#                                     "a","b", "sd",
+#                                     "aX","bX", "sdX"
+#                                   ),
+#                                   n.iter=5000,
+#                                   thin=1))
+# 
+# summary(chains1)
+# chainsM<-chains1
+# 
+# 
+# # Sitten katsotaan millaista matskua saadut priorit tuottaisivat
+# 
+# # odotusarvot ja hajonnat edellisesta ajosta
+# mua<-summary(chainsM[,"a"])$statistics[1]
+# sda<-summary(chainsM[,"a"])$statistics[2]
+# taua<-1/(sda*sda)
+# mua;taua
+# 
+# mub<-summary(chainsM[,"b"])$statistics[1]
+# sdb<-summary(chainsM[,"b"])$statistics[2]
+# cvb<-sdb/mub
+# taub<-1/log(cvb*cvb+1)
+# Mb<-log(mub)-0.5/taub
+# Mb;taub
+# 
+# musd<-summary(chainsM[,"sd"])$statistics[1]
+# sdsd<-summary(chainsM[,"sd"])$statistics[2]
+# cvsd<-sdsd/musd
+# tausd<-1/log(cvsd*cvsd+1)
+# Msd<-log(musd)-0.5/tausd
+# Msd;tausd
 
 
 M2<-"
 model{
-for(i in 1:n){
+for(y in 1:10){
+ logit_surv[y]~dnorm(a_t[y]+b_t[y]*tiam,1/pow(sd_t[y],2))
+logit(surv[i])<-logit_surv[y]
 
-P[i]~dnorm(mu[i],tau)
-mu[i]<-a+b*tiam[i]
-}
-tau<-1/pow(sd,2)
-
-a~dunif(-10,10)#dnorm(1,0.01)
-b~dunif(0,5)#dlnorm(-3.4,0.43)
-sd~dunif(0.001,5)#dlnorm(1,0.1)
-
-aX~dunif(0,10)#dnorm(1,0.01)
-bX~dunif(0,10)#dlnorm(-3.4,0.43)
-sdX~dunif(0.001,5)#dlnorm(1,0.1)
-}"
-
-cat(M2,file="prior-tiam.txt")
-
-data<-list(tiam=tiam,P=P, n=n)
-
-system.time(jm<-jags.model('prior-tiam.txt',
-                           n.adapt=100,data=data,n.chains=2))
-
-
-system.time(chains1<-coda.samples(jm,
-                                  variable.names=c(
-                                    #"p",
-                                    "a","b", "sd",
-                                    "aX","bX", "sdX"
-                                  ),
-                                  n.iter=5000,
-                                  thin=1))
-
-summary(chains1)
-chainsM<-chains1
-
-
-# Sitten katsotaan millaista matskua saadut priorit tuottaisivat
-
-# odotusarvot ja hajonnat edellisesta ajosta
-mua<-summary(chainsM[,"a"])$statistics[1]
-sda<-summary(chainsM[,"a"])$statistics[2]
-taua<-1/(sda*sda)
-mua;taua
-
-mub<-summary(chainsM[,"b"])$statistics[1]
-sdb<-summary(chainsM[,"b"])$statistics[2]
-cvb<-sdb/mub
-taub<-1/log(cvb*cvb+1)
-Mb<-log(mub)-0.5/taub
-Mb;taub
-
-musd<-summary(chainsM[,"sd"])$statistics[1]
-sdsd<-summary(chainsM[,"sd"])$statistics[2]
-cvsd<-sdsd/musd
-tausd<-1/log(cvsd*cvsd+1)
-Msd<-log(musd)-0.5/tausd
-Msd;tausd
-
-
-M2<-"
-model{
-for(i in 1:n){
-logit(p[i])<-P[i]
-P[i]~dnorm(mu[i],tau)
-mu[i]<-a+b*tiam[i]
+mu[i]<-a[+b*tiam[i]
 }
 tau<-1/pow(sd,2)
 # # 
@@ -144,15 +145,12 @@ cvx<-
 #cat(M2,file="prior-obs.txt")
 
 data<-list( 
-<<<<<<< HEAD
   # mu.a=mua,t.a=taua, 
   # M.b=Mb, T.b=taub, 
   # M.sd=Msd, T.sd=tausd,
-=======
  # mu.a=mua,t.a=taua, 
  # M.b=Mb, T.b=taub, 
  # M.sd=Msd, T.sd=tausd,
->>>>>>> ed2a3d00f31a4e09159a90e21d1eeff6f6605038
   tiam=tiam, n=n
 )
 
