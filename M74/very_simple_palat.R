@@ -57,39 +57,20 @@ for(i in 1:n){
 } 
 t1~dnorm(-2,1/(0.05*0.05))
 t2~dnorm(0,1/(0.05*0.05))
-a~dnorm(0,0.01)
-b~dnorm(1,1/(0.05*0.05))
+
+b<-(ysfm)/(t2-t1)
+a<--t1*b
+
 ysfm~dbeta(2,2)I(0.01,0.99)
 
-#T<-1/log(cv*cv+1)
-#cv~dunif(0.001,2)
 tau<-1/pow(sd,2)
 sd~dunif(0.001,5)#dlnorm(1,0.1)
 
-
 t1X~dnorm(-2,1/(0.05*0.05))
 t2X~dnorm(0,1/(0.05*0.05))
-aX~dnorm(0,0.01)
-bX~dnorm(1,1/(0.05*0.05))
 ysfmX~dbeta(2,2)I(0.01,0.99)
 sdX~dunif(0.001,5)#dlnorm(1,0.1)
 
-
-# for(i in 1:n){
-#   x[i]~dbin(p[i],Eggs[i])
-#   logit(p[i])<-P[i]
-#   P[i]~dnorm(mu[i],tau)
-#   mu[i]<-a+b*thiam_obs[i]
-# }
-# tau<-1/pow(sd,2)
-# 
-# a~dunif(-10,10)#dnorm(1,0.01)
-# b~dunif(0,20)#dlnorm(-3.4,0.43)
-# sd~dunif(0.001,5)#dlnorm(1,0.1)
-# 
-# aX~dunif(-10,10)#dnorm(1,0.01)
-# bX~dunif(0,10)#dlnorm(-3.4,0.43)
-# sdX~dunif(0.001,5)#dlnorm(1,0.1)
 }"
 
 cat(M3,file="prior-tiam.txt")
