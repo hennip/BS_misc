@@ -55,8 +55,8 @@ for(i in 1:n){
 #t2: tiamiini, jonka yläpuolella selviytyminen on tavallinen ysfm
 # näiden kahden välissä selviytyminen tulee yksinkertaisesta lineaarisesta mallista
 } 
-t1~dnorm(-2,1)
-t2~dnorm(0,1)I(,1)
+t1~dnorm(-2,0.1)
+t2~dnorm(0,0.1)I(,1)
 t1X~dnorm(-2,1)
 t2X~dnorm(0,1)
 #t1X~dnorm(-2,1/(0.5*0.5))
@@ -96,9 +96,10 @@ run10 <- run.jags(M3,
 
 run11<-extend.jags(run10, sample=3000, thin=10)#, add.monitor = c("aX"), drop.monitor = "x_rep")
 
-summary(run11)
+run<-run10
+summary(run)
 
-chains<-as.mcmc.list(run10)
+chains<-as.mcmc.list(run)
 
 par(mfrow=c(2,3))
 plot(density(chains[,"t1X"][[1]]), lty=2)
