@@ -116,7 +116,7 @@ plot(density(chains[,"sdX"][[1]]), lty=2)
 lines(density(chains[,"sd"][[1]]))
 
 
-summary(run10, var="x")
+summary(run, var="x")
 
 chains<-window(chains, thin=100)
 
