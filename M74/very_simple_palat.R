@@ -34,70 +34,104 @@ ggplot(df2, aes(x=log(thiam), y=1-YSFM, col=YEAR))+
 
 
 
+df4<-df3<-df2 |> filter(!is.na(thiam))
+df_ysfm<-df3 |> filter(thiam>=2) 
+df_m74<-df3 |> filter(thiam<2) 
+
+View(df_ysfm)
+View(df_m74)
+
+#data<-list(thiam_obs=log(df4$thiam), x=df4$surv_eggs, Eggs=df4$eggs, n=length(df4$eggs))
+
+data<-list(
+  thiam_obs=log(df_m74$thiam), x2=df_m74$surv_eggs, Eggs2=df_m74$eggs, N2=length(df_m74$eggs),
+  x1=df_ysfm$surv_eggs, Eggs1=df_ysfm$eggs, N1=length(df_ysfm$eggs))
 
 
 M3<-"
 model{
-for(i in 1:n){
- #x[i]~dlnorm(M[i], T)
- #M[i]<-log(mu[i])-0.5/T
- 
- x[i]~dbin(p[i],Eggs[i])
- x_rep[i]~dbin(p[i],Eggs[i])
- logit(p[i])<-P[i]
-  P[i]~dnorm(mu[i],tau)
- 
- mu[i]<-(1-step(thiam_obs[i]-t1))*0  + 
+
+# Estimoidaan ysfm osasta dataa (tiamiini >=2)
+# ja käytetään tätä estimoidessa m74+ysfm kuolleisuutta lopulle datalle (tiamiini<2)
+# päätös siitä mihin raja vedetään on subjektiivinen, pitäisi olla ekspertin tekemä rajaus
+
+for(i in 1:N1){ # ysfm: survival from normal ysfm
+ x1[i]~dbin(ysfm[i],Eggs1[i])
+  ysfm[i]~dbeta(a_ysfm, b_ysfm)
+}
+a_ysfm<-mu_ysfm*eta_ysfm
+b_ysfm<-(1-mu_ysfm)*eta_ysfm
+mu_ysfm~dbeta(2,2)T(0.01,0.99)
+eta_ysfm~dunif(0.01,100)
+
+ysfm_pred~dbeta(a_ysfm, b_ysfm)
+
+
+for(i in 1:N2){
+ #x_rep[i]~dbin(p[i],Eggs[i])
+
+# i: female index
+# x: surv_eggs
+# Eggs: total number of eggs
+ x2[i]~dbin(p[i],Eggs2[i])
+ # p: survival probability
+ p[i]~dbeta(ap[i], bp[i])T(0.01,0.99)
+
+# Antti:
+# p[i] = ilogit(logit_p[i])
+# logit_p[i] ~ dnorm(logit(mu[i]), sd_p^-2)
+#  sd_p~
+#########
+
+ap[i]<-mu[i]*eta
+bp[i]<-(1-mu[i])*eta
+
+ mu[i]<-(1-step(thiam_obs[i]-t1))*0.001  + 
  step(thiam_obs[i]-t1)* (1-step(thiam_obs[i]-t2)) * (a+b*thiam_obs[i]) + 
- step(thiam_obs[i]-t2)* ysfm 
+ step(thiam_obs[i]-t2)* ysfm_pred 
 
 #t1: tiamiini, jonka alapuolella selviytyminen on 0
 #t2: tiamiini, jonka yläpuolella selviytyminen on tavallinen ysfm
 # näiden kahden välissä selviytyminen tulee yksinkertaisesta lineaarisesta mallista
 } 
-t1~dnorm(-2,0.1)
-t2~dnorm(0,0.1)I(,1)
-t1X~dnorm(-2,1)
-t2X~dnorm(0,1)
-#t1X~dnorm(-2,1/(0.5*0.5))
-#t2X~dnorm(0,1/(0.5*0.5))
+t1~dnorm(-2,0.1)T(-10,0)
+t1X~dnorm(-2,0.1)T(-10,0)
+t2~dnorm(0,1)T(,1)
+t2X~dnorm(0,1)T(,1)
 
-b<-(ysfm)/(t2-t1)
+#b<-(ysfm)/(t2-t1)
+b<-(ysfm_pred)/(t2-t1)
 a<--t1*b
 
-ysfm~dbeta(2,2)I(0.01,0.99)
-ysfmX~dbeta(2,2)I(0.01,0.99)
+#ysfm~dbeta(2,2)I(0.01,0.99)
+#ysfmX~dbeta(2,2)I(0.01,0.99)
 
-tau<-1/pow(sd,2)
-sd~dunif(0.001,5)#dlnorm(1,0.1)
-sdX~dunif(0.001,5)#dlnorm(1,0.1)
-
+eta~dunif(0.01,1000)
 
 }"
 
 cat(M3,file="prior-tiam.txt")
 
-df4<-df3 |> filter(!is.na(thiam))
-df4<-df2 |> filter(!is.na(thiam))
-data<-list(thiam_obs=log(df4$thiam), x=df4$surv_eggs, Eggs=df4$eggs, n=length(df4$eggs))
 
 
 var_names=c(
- # "x_rep",
-  "t1", "t2", "a", "b", "ysfm","sd",
-"t1X", "t2X","aX", "bX", "ysfmX","sdX")
+#  "x_rep",
+ # "mu",
+  "ysfm_pred", "mu_ysfm", "eta_ysfm",
+  "t1", "t2", "a", "b",# "ysfm",#"eta",#"sd",
+"t1X", "t2X")#, "ysfmX")#"sdX")
 
 
 run10 <- run.jags(M3,
                  monitor= var_names,data=data, #inits = inits,
                  n.chains = 2, method = 'parallel', thin=10, burnin =1000,
-                 modules = "mix",keep.jags.files=F,sample =1000, adapt = 1000,
+                 modules = "mix",keep.jags.files=F,sample =2000, adapt = 1000,
                  progress.bar=TRUE)
 
-run11<-extend.jags(run10, sample=3000, thin=10)#, add.monitor = c("aX"), drop.monitor = "x_rep")
+#run11<-extend.jags(run10, sample=3000, thin=10)#, add.monitor = c("aX"), drop.monitor = "x_rep")
 
 run<-run10
-summary(run)
+#summary(run)
 
 chains<-as.mcmc.list(run)
 
@@ -106,17 +140,28 @@ plot(density(chains[,"t1X"][[1]]), lty=2)
 lines(density(chains[,"t1"][[1]]))
 plot(density(chains[,"t2X"][[1]]), lty=2)
 lines(density(chains[,"t2"][[1]]))
-#plot(density(chains[,"aX"][[1]]), lty=2)
+#plot(density(chains[,"a"][[1]]), xlim=c(0,1000))
 #lines(density(chains[,"a"][[1]]))
-#plot(density(chains[,"bX"][[1]]), lty=2)
+#plot(density(chains[,"b"][[1]]), xlim=c(0,1000))
 #lines(density(chains[,"b"][[1]]))
-plot(density(chains[,"ysfmX"][[1]]), lty=2)
+plot(density(chains[,"ysfm_pred"][[1]]))
+plot(density(chains[,"mu_ysfm"][[1]]))
+plot(density(chains[,"eta_ysfm"][[1]]))
+
+
 lines(density(chains[,"ysfm"][[1]]))
-plot(density(chains[,"sdX"][[1]]), lty=2)
-lines(density(chains[,"sd"][[1]]))
+plot(density(chains[,"eta"][[1]]))
 
+#plot(density(chains[,"sdX"][[1]]), lty=2)
+#lines(density(chains[,"sd"][[1]]))
 
-summary(run, var="x")
+plot(run, var="t1")
+plot(run, var="t2")
+plot(run, var="ysfm")
+
+exp(summary(run, var="t1"))
+exp(summary(run, var="t2"))
+summary(run, var="ysfm")
 
 chains<-window(chains, thin=100)
 
