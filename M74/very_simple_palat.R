@@ -55,21 +55,23 @@ for(i in 1:n){
 #t2: tiamiini, jonka yläpuolella selviytyminen on tavallinen ysfm
 # näiden kahden välissä selviytyminen tulee yksinkertaisesta lineaarisesta mallista
 } 
-t1~dnorm(-2,1/(0.05*0.05))
-t2~dnorm(0,1/(0.05*0.05))
+t1~dnorm(-2,1)
+t2~dnorm(0,1)I(,1)
+t1X~dnorm(-2,1)
+t2X~dnorm(0,1)
+#t1X~dnorm(-2,1/(0.5*0.5))
+#t2X~dnorm(0,1/(0.5*0.5))
 
 b<-(ysfm)/(t2-t1)
 a<--t1*b
 
 ysfm~dbeta(2,2)I(0.01,0.99)
+ysfmX~dbeta(2,2)I(0.01,0.99)
 
 tau<-1/pow(sd,2)
 sd~dunif(0.001,5)#dlnorm(1,0.1)
-
-t1X~dnorm(-2,1/(0.05*0.05))
-t2X~dnorm(0,1/(0.05*0.05))
-ysfmX~dbeta(2,2)I(0.01,0.99)
 sdX~dunif(0.001,5)#dlnorm(1,0.1)
+
 
 }"
 
@@ -96,21 +98,21 @@ run11<-extend.jags(run10, sample=3000, thin=10)#, add.monitor = c("aX"), drop.mo
 
 summary(run11)
 
-chains<-as.mcmc.list(run11)
+chains<-as.mcmc.list(run10)
 
 par(mfrow=c(2,3))
-plot(density(chains[,"t1"][[1]]))
-lines(density(chains[,"t1X"][[1]]))
-plot(density(chains[,"t2"][[1]]))
-lines(density(chains[,"t2X"][[1]]))
-plot(density(chains[,"a"][[1]]))
-lines(density(chains[,"aX"][[1]]))
-plot(density(chains[,"b"][[1]]))
-lines(density(chains[,"bX"][[1]]))
-plot(density(chains[,"ysfm"][[1]]))
-lines(density(chains[,"ysfmX"][[1]]))
-plot(density(chains[,"sd"][[1]]))
-lines(density(chains[,"sdX"][[1]]))
+plot(density(chains[,"t1X"][[1]]), lty=2)
+lines(density(chains[,"t1"][[1]]))
+plot(density(chains[,"t2X"][[1]]), lty=2)
+lines(density(chains[,"t2"][[1]]))
+#plot(density(chains[,"aX"][[1]]), lty=2)
+#lines(density(chains[,"a"][[1]]))
+#plot(density(chains[,"bX"][[1]]), lty=2)
+#lines(density(chains[,"b"][[1]]))
+plot(density(chains[,"ysfmX"][[1]]), lty=2)
+lines(density(chains[,"ysfm"][[1]]))
+plot(density(chains[,"sdX"][[1]]), lty=2)
+lines(density(chains[,"sd"][[1]]))
 
 
 summary(run10, var="x")
