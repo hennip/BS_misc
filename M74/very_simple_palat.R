@@ -131,7 +131,7 @@ for(i in 1:N2){
  # p: survival probability
  p[i]~dbeta(ap[i], bp[i])T(0.01,0.99)
 
-# Antti: logit-normaali korvaa beta-jakauman:
+# Antti: logit-normaali korvaisi beta-jakauman näin:
 # p[i] = ilogit(logit_p[i])
 # logit_p[i] ~ dnorm(logit(mu[i]), sd_p^-2)
 #  sd_p~
@@ -189,7 +189,7 @@ run11 <- run.jags(M3,
 
 run<-run10 # mu_ysfm as limit
 
-#run<-run11
+run<-run11 # pred_ysfm
 #summary(run)
 
 chains<-as.mcmc.list(run)
@@ -222,6 +222,9 @@ plot(density(chains[,"eta"][[1]]))
 plot(run, var="t1")
 plot(run, var="t2")
 plot(run, var="ysfm")
+
+summary(run, var="pred")
+summary(run, var="mu_ysfm")
 
 exp(summary(run, var="t1"))
 exp(summary(run, var="t2"))
