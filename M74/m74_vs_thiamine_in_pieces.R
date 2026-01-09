@@ -5,8 +5,10 @@ ggplot(df2, aes(x=log(thiam), y=1-YSFM))+
   geom_point(alpha=0.2)
 
 df3<-df2 |> filter(!is.na(thiam))
-df_ysfm<-df3 |> filter(thiam>=2) 
-df_m74<-df3 |> filter(thiam<2) 
+#df_ysfm<-df3 |> filter(thiam>=2) 
+#df_m74<-df3 |> filter(thiam<2) 
+df_ysfm<-df3 |> filter(thiam>=1) 
+df_m74<-df3 |> filter(thiam<1) 
 
 # KOKEILE VIELÄ MITEN TOIMISI JOS RAJA ON 1!
 #df_ysfm<-df3 |> filter(thiam>=1) 
@@ -66,7 +68,7 @@ data<-list(
   x1=df_ysfm$surv_eggs, Eggs1=df_ysfm$eggs, N1=length(df_ysfm$eggs))
 
 
-M3<-"
+M4<-"
 model{
 
 # Estimoidaan ysfm osasta dataa (tiamiini >=2)
@@ -103,9 +105,16 @@ ap[i]<-mu[i]*eta
 bp[i]<-(1-mu[i])*eta
 
  mu[i]<-(1-step(thiam_obs[i]-t1))*0.001  + 
- step(thiam_obs[i]-t1) * (1-step(thiam_obs[i]-t2)) * (a+b*thiam_obs[i]) + 
- step(thiam_obs[i]-t2) * mu_ysfm # Using pred_ysfm instead of mu_ysfm adds one stochastic variable -> this enables ysfm==1 and all variation is explained with M74
-
+ 
+ # Alternative 1:
+ #step(thiam_obs[i]-t1) * (1-step(thiam_obs[i]-t2)) * (a+b*thiam_obs[i]) + 
+ #step(thiam_obs[i]-t2) * mu_ysfm 
+ 
+ # Alternative 2:
+ # Using pred_ysfm instead of mu_ysfm adds one stochastic variable -> this enables ysfm==1 and all variation is explained with M74
+ step(thiam_obs[i]-t1) * (1-step(thiam_obs[i]-t2)) * (a2+b2*thiam_obs[i]) + 
+ step(thiam_obs[i]-t2) * pred_ysfm 
+ 
 #t1: tiamiini, jonka alapuolella selviytyminen on 0
 #t2: tiamiini, jonka yläpuolella selviytyminen on tavallinen ysfm
 # näiden kahden välissä selviytyminen tulee yksinkertaisesta lineaarisesta mallista
@@ -129,20 +138,21 @@ eta~dunif(0.01,1000)
 
 
 var_names=c(
-"b2",
+"a2", "b2",
     "pred_ysfm",
   "mu_ysfm", "eta_ysfm",
   "t1", "t2", "a", "b",
 "t1X", "t2X")
 
 
-run10 <- run.jags(M3,
+run11 <- run.jags(M4,
                  monitor= var_names,data=data, #inits = inits,
                  n.chains = 2, method = 'parallel', thin=10, burnin =1000,
                  modules = "mix",keep.jags.files=F,sample =1000, adapt = 1000,
                  progress.bar=TRUE)
 
 run<-run10 # mu_ysfm as limit
+#run<-run11 # pred_ysfm as limit
 
 #summary(run)
 
@@ -182,30 +192,54 @@ t2<-chains[,"t2"][[1]]
 a<-chains[,"a"][[1]]
 b<-chains[,"b"][[1]]
 ysfm<-chains[,"mu_ysfm"][[1]]
-#a<-chains[,"a2"][[1]]
-#b<-chains[,"b2"][[1]]
-#ysfm<-chains[,"pred_ysfm"][[1]]
+# a<-chains[,"a2"][[1]]
+# b<-chains[,"b2"][[1]]
+# ysfm<-chains[,"pred_ysfm"][[1]]
+ysfm_pred<-chains[,"pred_ysfm"][[1]]
+
+t2_star<-(ysfm_pred-a)/b
 
 log_thiam=seq(-2,1, by=0.01)
-surv<-array(NA, dim=c(length(a),length(log_thiam)))
+surv_star<-surv<-array(NA, dim=c(length(a),length(log_thiam)))
 
 for(i in 1:length(a)){
   for(j in 1:length(log_thiam)){
   surv[i,j]<-ifelse(log_thiam[j]<t1[i], 0,
                   ifelse(log_thiam[j]<t2[i],a[i]+b[i]*log_thiam[j],
                          ysfm[i]))
-}}
+  
+  surv_star[i,j]<-ifelse(log_thiam[j]<t1[i], 0,
+                    ifelse(log_thiam[j]<t2_star[i],a[i]+b[i]*log_thiam[j],
+                           ysfm_pred[i]))
+  }}
 
 par(mfrow=c(1,1))
-plot(log_thiam, surv[1,], type="l", col=rgb(0,0,0,0.1), ylim=c(0,1), xlim=c(-2,1))
+plot(log_thiam, surv[1,], type="l", col=rgb(0,0,0,0.1), ylim=c(0,1), xlim=c(-2,1), ylab="survival",
+     xlab="log(thiamine (nmol/g))")
 #for(i in 1:length(t1)){
   for(i in 1:100){
     lines(log_thiam, surv[i,], type="l",  col=rgb(0,0,0,0.1))
 }
 points(log(df2$thiam), 1-df2$YSFM,  col=rgb(0,0,1,0.2))
 
+# par(mfrow=c(1,1))
+# plot(log_thiam, surv_star[1,], type="l", col=rgb(0,0,0,0.1), ylim=c(0,1), xlim=c(-2,1))
+# #for(i in 1:length(t1)){
+# for(i in 1:100){
+#   lines(log_thiam, surv_star[i,], type="l",  col=rgb(0,0,0,0.1))
+# }
+# points(log(df2$thiam), 1-df2$YSFM,  col=rgb(0,0,1,0.2))
+# 
+
+summary((t2))
+summary((t2_star))
+
+
 summary(exp(t1))
 summary(exp(t2))
+summary(ysfm_pred)
+
+summary(exp(t2_star))
 summary(ysfm)
 
 
