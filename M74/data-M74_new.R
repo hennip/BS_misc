@@ -9,22 +9,22 @@
 
 
 # 
-# library(rjags)
-# library(runjags)
-# library(tidyverse)
-# library(readxl)
-# #library(xlsx)
-# library(forcats)
-# library(lubridate)
-# library(stringr)
-# library(gridExtra)
-# library(coda)
+library(rjags)
+library(runjags)
+library(tidyverse)
+library(readxl)
+#library(xlsx)
+library(forcats)
+library(lubridate)
+library(stringr)
+library(gridExtra)
+library(coda)
 
 #source("00-basics/tidy-functions.r")
-#source("../run-this-first-BS_misc.R")
+source("../run-this-first-BS_misc.R")
 
-pathM74old<-"../dat/M74/2021/"
-pathM74<-"../dat/M74/2023/"
+#pathM74old<-"../dat/M74/2021/"
+#pathM74<-"../dat/M74/2023/"
 
 # FI data
 dat<-read_xlsx(path=str_c(pathM74,"dat/orig/Finnish_M74_data-2022_paivitetty_TPa_21_01_2023.xlsx"), 

@@ -8,6 +8,10 @@ df3<-df2 |> filter(!is.na(thiam))
 df_ysfm<-df3 |> filter(thiam>=2) 
 df_m74<-df3 |> filter(thiam<2) 
 
+# KOKEILE VIELÄ MITEN TOIMISI JOS RAJA ON 1!
+#df_ysfm<-df3 |> filter(thiam>=1) 
+#df_m74<-df3 |> filter(thiam<1) 
+
 #View(df_ysfm)
 #View(df_m74)
 

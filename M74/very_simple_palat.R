@@ -1,12 +1,12 @@
 dfFI
 df2<-dfFI |> mutate(YSFM=YSFM/100)
 
-ggplot(df2, aes(x=thiam, y=1-YSFM, col=YEAR))+
-  geom_point()+
+ggplot(df2, aes(x=thiam, y=1-YSFM))+
+  geom_point(alpha=0.2)+
   geom_smooth()
 
-ggplot(df2, aes(x=log(thiam), y=1-YSFM, col=YEAR))+
-  geom_point()+
+ggplot(df2, aes(x=log(thiam), y=1-YSFM))+
+  geom_point(alpha=0.2)+
   # geom_smooth(method =
   #               "loess"
   # )    

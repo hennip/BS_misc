@@ -1,3 +1,4 @@
+par(mfrow=c(1,1))
 ysfm<-0.9 # Survival
 t1<-0.3
 t2<-1.2
