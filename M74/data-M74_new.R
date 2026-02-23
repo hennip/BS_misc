@@ -21,13 +21,13 @@ library(gridExtra)
 library(coda)
 
 #source("00-basics/tidy-functions.r")
-source("../run-this-first-BS_misc.R")
+source("../run-this-first-wgbast.R")
 
 #pathM74old<-"../dat/M74/2021/"
 #pathM74<-"../dat/M74/2023/"
 
 # FI data
-dat<-read_xlsx(path=str_c(pathM74,"dat/orig/Finnish_M74_data-2022_paivitetty_TPa_21_01_2023.xlsx"), 
+dat<-read_xlsx(str_c(pathM74,"Finnish_M74_data-2022_paivitetty_TPa_21_01_2023.xlsx"), 
               col_names = T, guess_max = 10000, sheet="Data", na=c("", "NA"))   
 #View(dat)
 
@@ -64,10 +64,10 @@ dfFI<-filter(dfFI, YEAR<2022)
 #View(dfFI)
 
 # Swedish M74 data until 2016 (in final format)
-df1<-read_tsv(str_c(pathM74old,"dat/der/M74dataSE16.txt"), col_names = T)
+df1<-read_tsv(str_c(pathM74,"M74dataSE16.txt"), col_names = T)
               
 # New Swedish M74 data
-df2<-read_xlsx(str_c(pathM74,"dat/der/Swedish_M74_data_17-22.xlsx"), na="NA")
+df2<-read_xlsx(str_c(pathM74,"Swedish_M74_data_17-22.xlsx"), na="NA")
 
 df2<-df2%>%
   #mutate(river=as_factor(river))%>%
