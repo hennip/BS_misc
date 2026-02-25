@@ -114,43 +114,42 @@ bp[i]<-(1-mu[i])*eta
  # surv_ysfm skaalaa logit-normaalin tavallisen ysfm:n tasolle silloin kun selviytyminen
  # olisi muuten 1. Muuta merkitystä tällä ei pitäisi olla, koska a ja b estimoituvat suhteessa
  # ko parametriin
- step(thiam_obs[i]-t1) *p[i]*surv_ysfm #(a+b*thiam_obs[i]) + 
+ step(thiam_obs[i]-t1) *q[i]*surv_ysfm
  
 logit(q[i])<-Q[i]
-Q[i]~dnorm(muQ[i],tauQP)
+Q[i]~dnorm(muQ[i],tauQ)
 muQ[i]<-aQ+bQ*thiam_obs[i]
 
- 
- 
-# step(thiam_obs[i]-t2) * ysfm 
- 
- 
-#t1: tiamiini, jonka alapuolella selviytyminen on 0
-#t2: tiamiini, jonka yläpuolella selviytyminen on tavallinen ysfm
-# näiden kahden välissä selviytyminen tulee yksinkertaisesta lineaarisesta mallista
 } 
 
 t1~dunif(-5,3)
 t1X~dunif(-5,3)
 
-
-aQ~dnorm(-20,0.01)
-bQ~dlnorm(0.1,1)
-sdQ~dlnorm(1,0.1)
+aQ~dnorm(0,1)
+bQ~dlnorm(log(2)-0.5*log(cv_bQ*cv_bQ),1/log(cv_bQ*cv_bQ+1))
+cv_bQ<-0.2
+sdQ~dlnorm(log(0.01)-0.5*log(cv_sdQ*cv_sdQ+1),1/log(cv_sdQ*cv_sdQ+1))
+cv_sdQ<-0.2
 tauQ<-1/pow(sdQ,2)
 
 eta~dunif(0.01,1000)
 surv_ysfm~dbeta(2,2)T(0.001,0.9999)
 
+aQX~dnorm(0,1)
+bQX~dlnorm(log(2)-0.5*log(cv_bQ*cv_bQ),1/log(cv_bQ*cv_bQ+1))
+sdQX~dlnorm(log(0.01)-0.5*log(cv_sdQ*cv_sdQ+1),1/log(cv_sdQ*cv_sdQ+1))
 
 }"
 
 
 
 var_names=c(
-  "a", "b",
-  "ysfm",
-  "t1", "t1X".
+  "sdQ", "sdQX ",
+  "mu",
+  "aQ", "bQ",
+  "aQX", "bQX",
+  "surv_ysfm",
+  "t1", "t1X",
   "eta"
   )
 
@@ -158,22 +157,25 @@ var_names=c(
 run11 <- run.jags(M4,
                  monitor= var_names,data=data, #inits = inits,
                  n.chains = 2, method = 'parallel', thin=10, burnin =1000,
-                 modules = "mix",keep.jags.files=F,sample =1000, adapt = 1000,
+                 modules = "mix",keep.jags.files=F,sample =10000, adapt = 1000,
                  progress.bar=TRUE)
 
 run<-run11
 
-#summary(run)
+summary(run)
+plot(run)
 
+plot(run, var="aQ")
+plot(run, var="bQ")
+plot(run, var="surv_ysfm")
+plot(run, var="sdQ")
+#
 chains<-as.mcmc.list(run)
 
 par(mfrow=c(2,3))
 plot(density(chains[,"t1"][[1]]), lty=1)
 lines(density(chains[,"t1X"][[1]]), lty=2)
 plot(density(exp(chains[,"t1"][[1]])))
-plot(density(chains[,"t2"][[1]]), lty=1)
-lines(density(chains[,"t2X"][[1]]), lty=2)
-plot(density(exp(chains[,"t2"][[1]])))
 
 plot(density(chains[,"a"][[1]]))
 plot(density(chains[,"b"][[1]]))

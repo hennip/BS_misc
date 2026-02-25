@@ -1,7 +1,7 @@
 
 log_thiam<-seq(from=-3, to=3, by=0.1)
 N<-length(log_thiam)
-a<--1
+a<-0
 b<-2
 sd<-0.01
 surv_ysfm<-0.9
@@ -54,9 +54,10 @@ muQ[i]<-aQ+bQ*thiam_obs[i]
 t1~dunif(-5,3)
 t1X~dunif(-5,3)
 
-aQ<--10#~dnorm(-20,0.01)
-bQ<-1#~dlnorm(0.1,1)
-sdQ<-#~dlnorm(1,0.1)
+aQ~dnorm(0,1)
+bQ~dlnorm(log(2)-0.5*(sd_bQ*sd_bQ),1/(sd_bQ*sd_bQ))
+sd_bQ<-1
+sdQ<-0.01#~dlnorm(1,0.1)
 tauQ<-1/pow(sdQ,2)
 
 eta~dunif(0.01,1000)
@@ -66,16 +67,15 @@ surv_ysfm~dbeta(2,2)T(0.001,0.9999)
 }"
 
 
-thiam<-seq(from=0.1, to=3, by=0.1)
-log(thiam)
+#thiam<-seq(from=0.1, to=3, by=0.1)
+log_thiam<-seq(from=-3, to=3, by=0.1)
 
-
-data<-list(thiam_obs=thiam, N=length(thiam), Eggs=rep(100, length(thiam)))
+data<-list(thiam_obs=log_thiam, N=length(log_thiam), Eggs=rep(100, length(log_thiam)))
 
 
 
 var_names=c(
-  "x","q",
+  "x","q","mu",
   "aQ", "bQ",
   "surv_ysfm",
   "t1", "t1X",
@@ -91,3 +91,16 @@ run0<- run.jags(M_priors,
 
 chains<-as.mcmc(run0)
 
+aQ<-chains[,"aQ"]
+Nsample<-length(aQ)
+
+mu<-x<-array(NA, dim=c(Nsample, N))
+for(i in 1:N){
+    x[,i]<-chains[,paste0("x[",i,"]")]
+    mu[,i]<-chains[,paste0("mu[",i,"]")]
+}
+#x<-mean(chains[,"x[1]"])
+plot(log_thiam, mu[1,])
+for(i in 2:N){
+points(log_thiam, mu[i,])
+}
